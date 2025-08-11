@@ -10,17 +10,16 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
-  
+
   sql:
     init:
-      mode: always
-      data-locations: classpath:data.sql
+      mode: never
 
 server:
   port: 8080
