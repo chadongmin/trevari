@@ -1,85 +1,95 @@
 package com.trevari.global.exception;
 
 import com.trevari.book.exception.BookException;
+import com.trevari.global.dto.ApiResponse;
+import com.trevari.global.dto.ErrorDetail;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     @ExceptionHandler(BookException.class)
-    public ResponseEntity<ErrorResponse> handleBookException(BookException e) {
-        log.error("Book exception: ", e);
-        
-        ErrorResponse errorResponse = new ErrorResponse(
-                e.getExceptionCode().getHttpStatus().value(),
-                e.getExceptionCode().getHttpStatus().getReasonPhrase(),
-                e.getMessage(),
-                LocalDateTime.now()
-        );
-        
-        return ResponseEntity.status(e.getExceptionCode().getHttpStatus()).body(errorResponse);
+    public ResponseEntity<ApiResponse<List<ErrorDetail>>> handleBookException(BookException e, HttpServletRequest request) {
+        log.error("Book exception at {}: ", request.getRequestURI(), e);
+
+        ErrorDetail errorDetail = ErrorDetail.of(e.getExceptionCode());
+        List<ErrorDetail> errors = List.of(errorDetail);
+
+        return ResponseEntity
+                .status(e.getExceptionCode().getHttpStatus())
+                .body(new ApiResponse<>(
+                        false,
+                        e.getExceptionCode().getHttpStatus().value(),
+                        e.getMessage(),
+                        errors,
+                        java.time.LocalDateTime.now()
+                ));
     }
-    
+
     @ExceptionHandler(BindException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(BindException e) {
-        log.error("Validation error: ", e);
-        
-        List<String> errors = e.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
+    public ResponseEntity<ApiResponse<List<ErrorDetail>>> handleValidationException(BindException e, HttpServletRequest request) {
+        log.error("Validation error at {}: ", request.getRequestURI(), e);
+
+        List<ErrorDetail> errors = e.getBindingResult().getFieldErrors().stream()
+                .map(error -> ErrorDetail.of(
+                        "VALIDATION_ERROR",
+                        error.getDefaultMessage(),
+                        error.getField()
+                ))
                 .toList();
-        
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation Failed",
-                String.join(", ", errors),
-                LocalDateTime.now()
-        );
-        
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ApiResponse<>(
+                        false,
+                        400,
+                        "Validation failed",
+                        errors,
+                        java.time.LocalDateTime.now()
+                ));
     }
-    
+
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
-        log.error("Illegal argument: ", e);
-        
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                e.getMessage(),
-                LocalDateTime.now()
-        );
-        
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    public ResponseEntity<ApiResponse<List<ErrorDetail>>> handleIllegalArgumentException(IllegalArgumentException e, HttpServletRequest request) {
+        log.error("Illegal argument at {}: ", request.getRequestURI(), e);
+
+        ErrorDetail errorDetail = ErrorDetail.of("ILLEGAL_ARGUMENT", e.getMessage(), null);
+        List<ErrorDetail> errors = List.of(errorDetail);
+
+        return ResponseEntity
+                .badRequest()
+                .body(new ApiResponse<>(
+                        false,
+                        400,
+                        "Bad Request",
+                        errors,
+                        java.time.LocalDateTime.now()
+                ));
     }
-    
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneralException(Exception e) {
-        log.error("Unexpected error: ", e);
-        
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "An unexpected error occurred",
-                LocalDateTime.now()
-        );
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    public ResponseEntity<ApiResponse<List<ErrorDetail>>> handleGeneralException(Exception e, HttpServletRequest request) {
+        log.error("Unexpected error at {}: ", request.getRequestURI(), e);
+
+        ErrorDetail errorDetail = ErrorDetail.of("INTERNAL_ERROR", "An unexpected error occurred", null);
+        List<ErrorDetail> errors = List.of(errorDetail);
+
+        return ResponseEntity
+                .internalServerError()
+                .body(new ApiResponse<>(
+                        false,
+                        500,
+                        "Internal Server Error",
+                        errors,
+                        java.time.LocalDateTime.now()
+                ));
     }
-    
-    public record ErrorResponse(
-            int status,
-            String error,
-            String message,
-            LocalDateTime timestamp
-    ) {}
 }
