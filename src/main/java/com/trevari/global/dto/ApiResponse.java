@@ -1,6 +1,7 @@
 package com.trevari.global.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -11,11 +12,17 @@ import java.time.LocalDateTime;
  * 성공/실패에 대한 일관된 응답 구조를 제공합니다.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "API 공통 응답")
 public record ApiResponse<T>(
+        @Schema(description = "성공 여부", example = "true")
         boolean success,
+        @Schema(description = "응답 코드", example = "200")
         int code,
+        @Schema(description = "응답 메시지", example = "Book retrieved successfully")
         String message,
+        @Schema(description = "응답 데이터")
         T data,
+        @Schema(description = "응답 시간", example = "2023-12-01T10:30:00")
         LocalDateTime timestamp
 ) {
     // 성공 응답 생성
