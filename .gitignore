@@ -1,0 +1,71 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### OS files ###
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
+
+### Logs ###
+logs/
+*.log
+spring.log
+
+### Temp files ###
+tmp/
+temp/
+.tmp/
+*.tmp
+*.swp
+*.swo
+*~
+
+### Env files ###
+.env
+.env.*
+
+### Gradle misc ###
+gradle-app.setting
+
+### Spring Boot local config (safe) ###
+# Ignore only local override variants if used
+application-*.local.yml
+application-*.local.yaml
+application-*.local.properties
