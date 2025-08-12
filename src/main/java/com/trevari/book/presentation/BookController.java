@@ -2,17 +2,17 @@ package com.trevari.book.presentation;
 
 import com.trevari.book.application.BookService;
 import com.trevari.book.domain.Book;
+import com.trevari.book.dto.response.BookSearchResponse;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
 import com.trevari.global.dto.ApiResponse;
 import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 도서 관련 API를 제공하는 컨트롤러
@@ -43,5 +43,34 @@ public class BookController implements BookApi {
         Book book = bookService.getBookByIsbn(isbn);
 
         return ApiResponse.ok(book, "Book retrieved successfully");
+    }
+
+    /**
+     * 키워드로 도서 검색
+     *
+     * @param keyword 검색 키워드
+     * @param page 페이지 번호 (1부터 시작)
+     * @param size 페이지 크기
+     * @return 검색 결과
+     */
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<BookSearchResponse>> searchBooks(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        if (StringUtils.isBlank(keyword)) {
+            throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
+        }
+
+        log.info("Request to search books - keyword: {}, page: {}, size: {}", keyword, page, size);
+
+        // 페이지 번호를 0 기반으로 변환 (Spring Data는 0부터 시작)
+        Pageable pageable = PageRequest.of(page - 1, size);
+        
+        BookSearchResponse response = bookService.searchBooks(keyword, pageable);
+
+        return ApiResponse.ok(response, "Books search completed successfully");
     }
 }

@@ -1,0 +1,77 @@
+package com.trevari.book.presentation;
+
+import com.trevari.book.application.BookService;
+import com.trevari.book.dto.response.BookSearchResponse;
+import com.trevari.book.exception.BookException;
+import com.trevari.book.exception.BookExceptionCode;
+import com.trevari.global.dto.ApiResponse;
+import io.micrometer.common.util.StringUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * 검색 관련 API를 제공하는 컨트롤러
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/search")
+@RequiredArgsConstructor
+@Tag(name = "Search API", description = "도서 검색 및 인기 키워드 API")
+public class SearchController {
+
+    private final BookService bookService;
+
+    /**
+     * 도서 검색 (명시적 검색 API)
+     *
+     * @param q 검색 쿼리
+     * @param page 페이지 번호 (1부터 시작)
+     * @param size 페이지 크기
+     * @return 검색 결과
+     */
+    @Operation(summary = "도서 검색", description = "검색 쿼리로 도서를 검색합니다. OR(|), NOT(-) 연산자를 지원합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "검색 성공",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 검색 쿼리",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            )
+    })
+    @GetMapping("/books")
+    public ResponseEntity<ApiResponse<BookSearchResponse>> searchBooks(
+            @Parameter(description = "검색 쿼리 (OR: keyword1|keyword2, NOT: keyword1 -keyword2)", required = true, example = "Java")
+            @RequestParam String q,
+            @Parameter(description = "페이지 번호 (1부터 시작)", example = "1")
+            @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "페이지 크기", example = "20")
+            @RequestParam(defaultValue = "20") int size) {
+
+        if (StringUtils.isBlank(q)) {
+            throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
+        }
+
+        log.info("Request to search books via /api/search/books - query: {}, page: {}, size: {}", q, page, size);
+
+        // 페이지 번호를 0 기반으로 변환 (Spring Data는 0부터 시작)
+        Pageable pageable = PageRequest.of(page - 1, size);
+        
+        BookSearchResponse response = bookService.searchBooks(q, pageable);
+
+        return ApiResponse.ok(response, "Books search completed successfully");
+    }
+}
