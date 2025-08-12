@@ -9,7 +9,9 @@ public interface SearchKeywordRepository {
     
     List<SearchKeyword> findTop10ByOrderBySearchCountDesc();
     
-    SearchKeyword save(SearchKeyword searchKeyword);
+    SearchKeyword saveSearchKeyword(SearchKeyword searchKeyword);
     
     void incrementSearchCount(String keyword);
+    
+    void deleteAll();
 }

@@ -66,8 +66,8 @@ public class BookService {
             // 도서 검색 실행
             Page<Book> bookPage = bookRepository.searchBooks(searchQuery, pageable);
             
-            // 검색 키워드 기록 (데이터베이스 스키마 이슈로 일시 비활성화)
-            // searchKeywordService.recordSearchKeyword(keyword);
+            // 검색 키워드 기록
+            searchKeywordService.recordSearchKeyword(keyword);
             
             long executionTime = System.currentTimeMillis() - startTime;
             log.info("Book search completed in {}ms, found {} books", 

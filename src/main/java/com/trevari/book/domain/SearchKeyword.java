@@ -31,9 +31,9 @@ public class SearchKeyword {
     private LocalDateTime updatedAt;
     
     @Builder
-    public SearchKeyword(String keyword) {
+    public SearchKeyword(String keyword, Long searchCount) {
         this.keyword = keyword;
-        this.searchCount = 1L;
+        this.searchCount = searchCount != null ? searchCount : 1L;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

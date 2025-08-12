@@ -1,7 +1,10 @@
 package com.trevari.book.presentation;
 
 import com.trevari.book.application.BookService;
+import com.trevari.book.application.SearchKeywordService;
+import com.trevari.book.domain.SearchKeyword;
 import com.trevari.book.dto.response.BookSearchResponse;
+import com.trevari.book.dto.response.PopularSearchResponse;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
 import com.trevari.global.dto.ApiResponse;
@@ -19,6 +22,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 검색 관련 API를 제공하는 컨트롤러
  */
@@ -30,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 public class SearchController {
 
     private final BookService bookService;
+    private final SearchKeywordService searchKeywordService;
 
     /**
      * 도서 검색 (명시적 검색 API)
@@ -73,5 +79,28 @@ public class SearchController {
         BookSearchResponse response = bookService.searchBooks(q, pageable);
 
         return ApiResponse.ok(response, "Books search completed successfully");
+    }
+
+    /**
+     * 인기 검색 키워드 조회 (상위 10개)
+     *
+     * @return 인기 검색 키워드 목록 (검색 횟수와 함께)
+     */
+    @Operation(summary = "인기 검색 키워드", description = "검색 횟수 기준 상위 10개 인기 키워드를 조회합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            )
+    })
+    @GetMapping("/popular")
+    public ResponseEntity<ApiResponse<PopularSearchResponse>> getPopularKeywords() {
+        log.info("Request to get popular search keywords");
+
+        List<SearchKeyword> topKeywords = searchKeywordService.getTopSearchKeywords();
+        PopularSearchResponse response = PopularSearchResponse.from(topKeywords);
+
+        return ApiResponse.ok(response, "Popular search keywords retrieved successfully");
     }
 }
