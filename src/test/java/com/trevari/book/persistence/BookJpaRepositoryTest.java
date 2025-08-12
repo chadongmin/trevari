@@ -1,12 +1,14 @@
 package com.trevari.book.persistence;
 
 import com.trevari.book.domain.Book;
+import com.trevari.book.domain.PublicationInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("test")
+@Import(com.trevari.global.config.QueryDslConfig.class)
 @DisplayName("BookJpaRepository 데이터 액세스 테스트")
 class BookJpaRepositoryTest {
     
@@ -40,27 +43,33 @@ class BookJpaRepositoryTest {
                 .isbn("9781617297397")
                 .title("Java in Action")
                 .subtitle("Lambdas, streams, functional and reactive programming")
-                .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco"))
-                .publisher("Manning Publications")
-                .publishedDate(LocalDate.of(2020, 1, 1))
+                .publicationInfo(PublicationInfo.builder()
+                        .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco"))
+                        .publisher("Manning Publications")
+                        .publishedDate(LocalDate.of(2020, 1, 1))
+                        .build())
                 .build();
         
         springBook = Book.builder()
                 .isbn("9781617294945")
                 .title("Spring in Action")
                 .subtitle("Fifth Edition")
-                .authors(List.of("Craig Walls"))
-                .publisher("Manning Publications")
-                .publishedDate(LocalDate.of(2020, 2, 1))
+                .publicationInfo(PublicationInfo.builder()
+                        .authors(List.of("Craig Walls"))
+                        .publisher("Manning Publications")
+                        .publishedDate(LocalDate.of(2020, 2, 1))
+                        .build())
                 .build();
         
         pythonBook = Book.builder()
                 .isbn("9781491950401")
                 .title("Learning Python")
                 .subtitle("Powerful Object-Oriented Programming")
-                .authors(List.of("Mark Lutz"))
-                .publisher("O'Reilly Media")
-                .publishedDate(LocalDate.of(2020, 3, 1))
+                .publicationInfo(PublicationInfo.builder()
+                        .authors(List.of("Mark Lutz"))
+                        .publisher("O'Reilly Media")
+                        .publishedDate(LocalDate.of(2020, 3, 1))
+                        .build())
                 .build();
         
         // 데이터 저장
@@ -81,7 +90,7 @@ class BookJpaRepositoryTest {
         Book foundBook = result.get();
         assertThat(foundBook.getIsbn()).isEqualTo("9781617297397");
         assertThat(foundBook.getTitle()).isEqualTo("Java in Action");
-        assertThat(foundBook.getAuthors()).containsExactly("Raoul-Gabriel Urma", "Mario Fusco");
+        assertThat(foundBook.getPublicationInfo().getAuthors()).containsExactly("Raoul-Gabriel Urma", "Mario Fusco");
     }
     
     @Test
@@ -136,7 +145,7 @@ class BookJpaRepositoryTest {
         // Then
         assertThat(result).isNotEmpty();
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getAuthors()).contains("Craig Walls");
+        assertThat(result.getContent().get(0).getPublicationInfo().getAuthors()).contains("Craig Walls");
     }
     
     @Test
@@ -197,7 +206,7 @@ class BookJpaRepositoryTest {
         
         // Then
         assertThat(result).isEmpty();
-        assertThat(result.getTotalElements()).isEqualTo(0);
+        assertThat(result.getTotalElements()).isZero();
     }
     
     @Test

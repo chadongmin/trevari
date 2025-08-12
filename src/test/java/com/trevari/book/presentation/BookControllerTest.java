@@ -125,15 +125,15 @@ class BookControllerTest {
     @Test
     @DisplayName("빈 ISBN으로 조회")
     void getBookDetail_EmptyIsbn() throws Exception {
-        // given
-        String isbn = "";
-        given(bookService.getBookByIsbn(isbn))
-                .willThrow(new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD));
+        // given - 공백만 있는 ISBN (컨트롤러에서 validation하므로 service mock 불필요)
+        String isbn = "   ";
 
         // when & then
         mockMvc.perform(get("/api/books/{isbn}", isbn)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // 빈 경로는 400 처리
+                .andExpect(status().isBadRequest()) // Controller validation에서 400 처리
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(400));
     }
 }
