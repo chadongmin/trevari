@@ -18,9 +18,9 @@ public record BookResponse(
                 book.getIsbn(),
                 book.getTitle(),
                 book.getSubtitle(),
-                book.getAuthors(),
-                book.getPublisher(),
-                book.getPublishedDate()
+                book.getPublicationInfo() != null ? book.getPublicationInfo().getAuthors() : List.of(),
+                book.getPublicationInfo() != null ? book.getPublicationInfo().getPublisher() : "",
+                book.getPublicationInfo() != null ? book.getPublicationInfo().getPublishedDate() : null
         );
     }
 }

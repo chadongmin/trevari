@@ -2,10 +2,16 @@ package com.trevari.book.application;
 
 import com.trevari.book.domain.Book;
 import com.trevari.book.domain.BookRepository;
+import com.trevari.book.domain.search.SearchQuery;
+import com.trevari.book.domain.search.SearchQueryParser;
+import com.trevari.book.dto.response.BookSearchResponse;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
+import com.trevari.global.dto.PageInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final SearchQueryParser searchQueryParser;
+    private final SearchKeywordService searchKeywordService;
 
     /**
      * ISBN으로 도서 단건 조회
@@ -35,5 +43,51 @@ public class BookService {
                     log.warn("Book not found with ISBN: {}", isbn);
                     return new BookException(BookExceptionCode.BOOK_NOT_FOUND);
                 });
+    }
+
+    /**
+     * 키워드로 도서 검색
+     *
+     * @param keyword 검색 키워드
+     * @param pageable 페이징 정보
+     * @return 검색 결과
+     */
+    public BookSearchResponse searchBooks(String keyword, Pageable pageable) {
+        log.info("Searching books with keyword: {}, page: {}, size: {}", 
+                keyword, pageable.getPageNumber(), pageable.getPageSize());
+
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // 검색 쿼리 파싱
+            SearchQuery searchQuery = searchQueryParser.parse(keyword);
+            log.debug("Parsed search query: {}", searchQuery);
+
+            // 도서 검색 실행
+            Page<Book> bookPage = bookRepository.searchBooks(searchQuery, pageable);
+            
+            // 검색 키워드 기록 (데이터베이스 스키마 이슈로 일시 비활성화)
+            // searchKeywordService.recordSearchKeyword(keyword);
+            
+            long executionTime = System.currentTimeMillis() - startTime;
+            log.info("Book search completed in {}ms, found {} books", 
+                    executionTime, bookPage.getTotalElements());
+
+            // 응답 객체 생성
+            PageInfo pageInfo = PageInfo.of(bookPage);
+            
+            return BookSearchResponse.builder()
+                    .searchQuery(keyword)
+                    .pageInfo(pageInfo)
+                    .books(bookPage.getContent())
+                    .searchMetadata(com.trevari.book.dto.response.SearchMetadata.of(
+                            executionTime, 
+                            searchQuery.strategy().name()))
+                    .build();
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid search query: {}", keyword, e);
+            throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
+        }
     }
 }

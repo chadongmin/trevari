@@ -16,4 +16,8 @@ public record PageInfo(
                 page.getTotalElements()
         );
     }
+
+    public static PageInfo of(Page<?> page) {
+        return from(page);
+    }
 }

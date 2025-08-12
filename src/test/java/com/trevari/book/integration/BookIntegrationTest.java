@@ -2,6 +2,7 @@ package com.trevari.book.integration;
 
 import com.trevari.book.IntegrationTestSupport;
 import com.trevari.book.domain.Book;
+import com.trevari.book.domain.PublicationInfo;
 import com.trevari.book.persistence.BookJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,9 +40,11 @@ class BookIntegrationTest extends IntegrationTestSupport {
                 .isbn("9781617297397")
                 .title("Java in Action")
                 .subtitle("Lambdas, streams, functional and reactive programming")
-                .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft"))
-                .publisher("Manning Publications")
-                .publishedDate(LocalDate.of(2020, 1, 1))
+                .publicationInfo(PublicationInfo.builder()
+                        .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft"))
+                        .publisher("Manning Publications")
+                        .publishedDate(LocalDate.of(2020, 1, 1))
+                        .build())
                 .build();
 
         bookRepository.save(testBook);
@@ -63,12 +66,12 @@ class BookIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.data.isbn").value(testBook.getIsbn()))
                 .andExpect(jsonPath("$.data.title").value(testBook.getTitle()))
                 .andExpect(jsonPath("$.data.subtitle").value(testBook.getSubtitle()))
-                .andExpect(jsonPath("$.data.authors").isArray())
-                .andExpect(jsonPath("$.data.authors[0]").value("Raoul-Gabriel Urma"))
-                .andExpect(jsonPath("$.data.authors[1]").value("Mario Fusco"))
-                .andExpect(jsonPath("$.data.authors[2]").value("Alan Mycroft"))
-                .andExpect(jsonPath("$.data.publisher").value(testBook.getPublisher()))
-                .andExpect(jsonPath("$.data.publishedDate").value(testBook.getPublishedDate().toString()))
+                .andExpect(jsonPath("$.data.publicationInfo.authors").isArray())
+                .andExpect(jsonPath("$.data.publicationInfo.authors[0]").value("Raoul-Gabriel Urma"))
+                .andExpect(jsonPath("$.data.publicationInfo.authors[1]").value("Mario Fusco"))
+                .andExpect(jsonPath("$.data.publicationInfo.authors[2]").value("Alan Mycroft"))
+                .andExpect(jsonPath("$.data.publicationInfo.publisher").value("Manning Publications"))
+                .andExpect(jsonPath("$.data.publicationInfo.publishedDate").value("2020-01-01"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
