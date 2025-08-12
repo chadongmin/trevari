@@ -2,6 +2,7 @@ package com.trevari.book.application;
 
 import com.trevari.book.domain.Book;
 import com.trevari.book.domain.BookRepository;
+import com.trevari.book.domain.PublicationInfo;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,9 +40,11 @@ class BookServiceTest {
                 .isbn("9781617297397")
                 .title("Java in Action")
                 .subtitle("Lambdas, streams, functional and reactive programming")
-                .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft"))
-                .publisher("Manning Publications")
-                .publishedDate(LocalDate.of(2020, 1, 1))
+                .publicationInfo(PublicationInfo.builder()
+                        .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft"))
+                        .publisher("Manning Publications")
+                        .publishedDate(LocalDate.of(2020, 1, 1))
+                        .build())
                 .build();
     }
 
@@ -60,9 +63,9 @@ class BookServiceTest {
         assertThat(result.getIsbn()).isEqualTo(isbn);
         assertThat(result.getTitle()).isEqualTo("Java in Action");
         assertThat(result.getSubtitle()).isEqualTo("Lambdas, streams, functional and reactive programming");
-        assertThat(result.getAuthors()).containsExactly("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft");
-        assertThat(result.getPublisher()).isEqualTo("Manning Publications");
-        assertThat(result.getPublishedDate()).isEqualTo(LocalDate.of(2020, 1, 1));
+        assertThat(result.getPublicationInfo().getAuthors()).containsExactly("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft");
+        assertThat(result.getPublicationInfo().getPublisher()).isEqualTo("Manning Publications");
+        assertThat(result.getPublicationInfo().getPublishedDate()).isEqualTo(LocalDate.of(2020, 1, 1));
 
         verify(bookRepository).findByIsbn(isbn);
     }
