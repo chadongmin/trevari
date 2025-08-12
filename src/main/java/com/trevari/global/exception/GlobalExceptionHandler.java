@@ -4,13 +4,17 @@ import com.trevari.book.exception.BookException;
 import com.trevari.global.dto.ApiResponse;
 import com.trevari.global.dto.ErrorDetail;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -91,5 +95,19 @@ public class GlobalExceptionHandler {
                         errors,
                         java.time.LocalDateTime.now()
                 ));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<List<ErrorDetail>>> handleConstraintViolation(ConstraintViolationException e, HttpServletRequest request) {
+        log.error("Constraint violation at {}: ", request.getRequestURI(), e);
+        List<ErrorDetail> errors = e.getConstraintViolations().stream()
+                .map(violation -> new ErrorDetail(
+                        violation.getConstraintDescriptor().getAnnotation().annotationType().getSimpleName(),
+                        violation.getMessage(),
+                        violation.getPropertyPath().toString()
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.badRequest().body(new ApiResponse<>(false, HttpStatus.BAD_REQUEST.value(), "Validation failed", errors, LocalDateTime.now()));
     }
 }

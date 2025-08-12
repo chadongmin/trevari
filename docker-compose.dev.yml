@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  mysql:
+    image: mysql:8.0
+    hostname: trevari
+    container_name: trevari-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql_root
+      MYSQL_DATABASE: trevari
+      MYSQL_USER: trevari
+      MYSQL_PASSWORD: trevari1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database/mysql/config:/etc/mysql/conf.d
+      - ./database/mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - network
+
+  redis:
+    image: redis:6.2.6-alpine
+    container_name: trevari-redis
+    ports:
+      - "16379:6379"
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge

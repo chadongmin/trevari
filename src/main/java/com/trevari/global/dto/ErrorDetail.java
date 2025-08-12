@@ -13,7 +13,7 @@ public record ErrorDetail(
 ) {
     public static ErrorDetail of(ExceptionCode exceptionCode) {
         return new ErrorDetail(
-                exceptionCode.getClass().getSimpleName(),
+                ((Enum<?>) exceptionCode).name(),
                 exceptionCode.getMessage(),
                 null
         );
