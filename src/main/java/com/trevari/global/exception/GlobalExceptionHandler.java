@@ -3,6 +3,7 @@ package com.trevari.global.exception;
 import com.trevari.book.exception.BookException;
 import com.trevari.global.dto.ApiResponse;
 import com.trevari.global.dto.ErrorDetail;
+import com.trevari.global.ratelimit.RateLimitExceededException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -109,5 +110,30 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.toList());
 
         return ResponseEntity.badRequest().body(new ApiResponse<>(false, HttpStatus.BAD_REQUEST.value(), "Validation failed", errors, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiResponse<List<ErrorDetail>>> handleRateLimitExceeded(RateLimitExceededException e, HttpServletRequest request) {
+        log.warn("Rate limit exceeded at {}: {}", request.getRequestURI(), e.getMessage());
+
+        ErrorDetail errorDetail = ErrorDetail.of(
+            "RATE_LIMIT_EXCEEDED", 
+            e.getMessage(), 
+            "rate_limit"
+        );
+        List<ErrorDetail> errors = List.of(errorDetail);
+
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("X-RateLimit-Limit", String.valueOf(e.getLimit()))
+                .header("X-RateLimit-Window", String.valueOf(e.getWindowInSeconds()))
+                .header("X-RateLimit-Retry-After", String.valueOf(e.getRemainingTime()))
+                .body(new ApiResponse<>(
+                        false,
+                        HttpStatus.TOO_MANY_REQUESTS.value(),
+                        "Rate limit exceeded",
+                        errors,
+                        LocalDateTime.now()
+                ));
     }
 }

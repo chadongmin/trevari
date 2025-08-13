@@ -8,6 +8,7 @@ import com.trevari.book.dto.response.PopularSearchResponse;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
 import com.trevari.global.dto.ApiResponse;
+import com.trevari.global.ratelimit.RateLimit;
 import io.micrometer.common.util.StringUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -59,6 +60,7 @@ public class SearchController {
             )
     })
     @GetMapping("/books")
+    @RateLimit(limit = 100, window = 1) // 100 requests per minute per IP
     public ResponseEntity<ApiResponse<BookSearchResponse>> searchBooks(
             @Parameter(description = "검색 쿼리 (OR: keyword1|keyword2, NOT: keyword1 -keyword2)", required = true, example = "Java")
             @RequestParam String q,
@@ -95,6 +97,7 @@ public class SearchController {
             )
     })
     @GetMapping("/popular")
+    @RateLimit(limit = 20, window = 1) // 20 requests per minute per IP  
     public ResponseEntity<ApiResponse<PopularSearchResponse>> getPopularKeywords() {
         log.info("Request to get popular search keywords");
 

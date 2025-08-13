@@ -6,6 +6,7 @@ import com.trevari.book.dto.response.BookSearchResponse;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
 import com.trevari.global.dto.ApiResponse;
+import com.trevari.global.ratelimit.RateLimit;
 import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class BookController implements BookApi {
      */
     @Override
     @GetMapping("/{isbn}")
+    @RateLimit(limit = 200, window = 1) // 200 requests per minute per IP
     public ResponseEntity<ApiResponse<Book>> getBookDetail(@PathVariable String isbn) {
 
         if (StringUtils.isBlank(isbn)) {
@@ -55,6 +57,7 @@ public class BookController implements BookApi {
      */
     @Override
     @GetMapping
+    @RateLimit(limit = 100, window = 1) // 100 requests per minute per IP
     public ResponseEntity<ApiResponse<BookSearchResponse>> searchBooks(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "1") int page,
