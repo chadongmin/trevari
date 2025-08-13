@@ -2,6 +2,7 @@ package com.trevari.book.presentation;
 
 import com.trevari.book.application.BookService;
 import com.trevari.book.domain.Book;
+import com.trevari.book.dto.response.BookResponse;
 import com.trevari.book.dto.response.BookSearchResponse;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
@@ -35,7 +36,7 @@ public class BookController implements BookApi {
     @Override
     @GetMapping("/{isbn}")
     @RateLimit(limit = 200, window = 1) // 200 requests per minute per IP
-    public ResponseEntity<ApiResponse<Book>> getBookDetail(@PathVariable String isbn) {
+    public ResponseEntity<ApiResponse<BookResponse>> getBookDetail(@PathVariable String isbn) {
 
         if (StringUtils.isBlank(isbn)) {
             throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
@@ -43,8 +44,9 @@ public class BookController implements BookApi {
         log.info("Request to get book detail - ISBN: {}", isbn);
 
         Book book = bookService.getBookByIsbn(isbn);
+        BookResponse bookResponse = BookResponse.from(book);
 
-        return ApiResponse.ok(book, "Book retrieved successfully");
+        return ApiResponse.ok(bookResponse, "Book retrieved successfully");
     }
 
     /**

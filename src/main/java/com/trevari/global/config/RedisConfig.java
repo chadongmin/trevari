@@ -39,7 +39,7 @@ public class RedisConfig {
             BasicPolymorphicTypeValidator.builder()
                 .allowIfBaseType(Object.class)
                 .build(),
-            ObjectMapper.DefaultTyping.NON_FINAL,
+            ObjectMapper.DefaultTyping.EVERYTHING,
             JsonTypeInfo.As.PROPERTY
         );
         return objectMapper;
