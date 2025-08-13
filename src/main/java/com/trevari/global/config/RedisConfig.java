@@ -27,16 +27,12 @@ import java.util.Map;
 @org.springframework.context.annotation.Profile("!test")
 public class RedisConfig {
 
+    /**
+     * Redis용 ObjectMapper Bean 생성
+     * JavaTimeModule이 포함된 공통 ObjectMapper를 사용
+     */
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        
-        // Key serializer
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setHashKeySerializer(new StringRedisSerializer());
-        
-        // Value serializer - JSON with type information
+    public ObjectMapper redisObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.activateDefaultTyping(
@@ -46,8 +42,21 @@ public class RedisConfig {
             ObjectMapper.DefaultTyping.NON_FINAL,
             JsonTypeInfo.As.PROPERTY
         );
+        return objectMapper;
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, 
+                                                        ObjectMapper redisObjectMapper) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
         
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        // Key serializer
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        
+        // Value serializer - JSON with type information
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
         template.setValueSerializer(serializer);
         template.setHashValueSerializer(serializer);
         
@@ -56,14 +65,15 @@ public class RedisConfig {
     }
 
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // 기본 캐시 설정
+    public CacheManager cacheManager(RedisConnectionFactory connectionFactory, 
+                                   ObjectMapper redisObjectMapper) {
+        // 기본 캐시 설정 - RedisTemplate과 동일한 ObjectMapper 사용
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10)) // 기본 TTL 10분
                 .serializeKeysWith(org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer()));
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(redisObjectMapper)));
 
         // 캐시별 개별 설정
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();

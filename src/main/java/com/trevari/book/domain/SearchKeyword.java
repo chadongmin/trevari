@@ -24,33 +24,34 @@ public class SearchKeyword {
     @Column(nullable = false)
     private Long searchCount = 1L;
     
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    // Timestamp fields temporarily commented out due to database schema mismatch
+    // @Column(name = "created_at", nullable = false, updatable = false)
+    // private LocalDateTime createdAt;
     
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    // @Column(name = "updated_at", nullable = false)
+    // private LocalDateTime updatedAt;
     
     @Builder
     public SearchKeyword(String keyword, Long searchCount) {
         this.keyword = keyword;
         this.searchCount = searchCount != null ? searchCount : 1L;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        // this.createdAt = LocalDateTime.now();
+        // this.updatedAt = LocalDateTime.now();
     }
     
     public void incrementCount() {
         this.searchCount++;
-        this.updatedAt = LocalDateTime.now();
+        // this.updatedAt = LocalDateTime.now();
     }
     
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
+    // @PrePersist
+    // protected void onCreate() {
+    //     this.createdAt = LocalDateTime.now();
+    //     this.updatedAt = LocalDateTime.now();
+    // }
     
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+    // @PreUpdate
+    // protected void onUpdate() {
+    //     this.updatedAt = LocalDateTime.now();
+    // }
 }
