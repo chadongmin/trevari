@@ -66,12 +66,12 @@ class BookIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.data.isbn").value(testBook.getIsbn()))
                 .andExpect(jsonPath("$.data.title").value(testBook.getTitle()))
                 .andExpect(jsonPath("$.data.subtitle").value(testBook.getSubtitle()))
-                .andExpect(jsonPath("$.data.publicationInfo.authors").isArray())
-                .andExpect(jsonPath("$.data.publicationInfo.authors[0]").value("Raoul-Gabriel Urma"))
-                .andExpect(jsonPath("$.data.publicationInfo.authors[1]").value("Mario Fusco"))
-                .andExpect(jsonPath("$.data.publicationInfo.authors[2]").value("Alan Mycroft"))
-                .andExpect(jsonPath("$.data.publicationInfo.publisher").value("Manning Publications"))
-                .andExpect(jsonPath("$.data.publicationInfo.publishedDate").value("2020-01-01"))
+                .andExpect(jsonPath("$.data.authors").isArray())
+                .andExpect(jsonPath("$.data.authors[0]").value("Raoul-Gabriel Urma"))
+                .andExpect(jsonPath("$.data.authors[1]").value("Mario Fusco"))
+                .andExpect(jsonPath("$.data.authors[2]").value("Alan Mycroft"))
+                .andExpect(jsonPath("$.data.publisher").value("Manning Publications"))
+                .andExpect(jsonPath("$.data.publishedDate").value("2020-01-01"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 

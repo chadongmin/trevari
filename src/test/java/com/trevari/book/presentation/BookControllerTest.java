@@ -86,12 +86,12 @@ class BookControllerTest {
                 .andExpect(jsonPath("$.data.isbn").value("9781617297397"))
                 .andExpect(jsonPath("$.data.title").value("Java in Action"))
                 .andExpect(jsonPath("$.data.subtitle").value("Lambdas, streams, functional and reactive programming"))
-                .andExpect(jsonPath("$.data.publicationInfo.authors").isArray())
-                .andExpect(jsonPath("$.data.publicationInfo.authors[0]").value("Raoul-Gabriel Urma"))
-                .andExpect(jsonPath("$.data.publicationInfo.authors[1]").value("Mario Fusco"))
-                .andExpect(jsonPath("$.data.publicationInfo.authors[2]").value("Alan Mycroft"))
-                .andExpect(jsonPath("$.data.publicationInfo.publisher").value("Manning Publications"))
-                .andExpect(jsonPath("$.data.publicationInfo.publishedDate").value("2020-01-01"))
+                .andExpect(jsonPath("$.data.authors").isArray())
+                .andExpect(jsonPath("$.data.authors[0]").value("Raoul-Gabriel Urma"))
+                .andExpect(jsonPath("$.data.authors[1]").value("Mario Fusco"))
+                .andExpect(jsonPath("$.data.authors[2]").value("Alan Mycroft"))
+                .andExpect(jsonPath("$.data.publisher").value("Manning Publications"))
+                .andExpect(jsonPath("$.data.publishedDate").value("2020-01-01"))
                 .andExpect(jsonPath("$.timestamp").exists());
 
         verify(bookService).getBookByIsbn(isbn);
