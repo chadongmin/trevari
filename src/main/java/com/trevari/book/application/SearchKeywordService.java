@@ -29,7 +29,7 @@ public class SearchKeywordService {
     private final SearchKeywordRepository searchKeywordRepository;
     
     @Autowired(required = false)
-    private RedisTemplate<String, String> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
     
     private static final String POPULAR_KEYWORDS_KEY = "popular_keywords";
     
@@ -131,14 +131,15 @@ public class SearchKeywordService {
         
         try {
             // Redis SortedSet ZREVRANGE - O(log N + M) 시간 복잡도
-            Set<ZSetOperations.TypedTuple<String>> results =
+            Set<ZSetOperations.TypedTuple<Object>> results =
                 redisTemplate.opsForZSet().reverseRangeWithScores(POPULAR_KEYWORDS_KEY, 0, count - 1);
             
             List<PopularKeywordDto> keywords = new ArrayList<>();
             if (results != null) {
-                for (ZSetOperations.TypedTuple<String> tuple : results) {
+                for (ZSetOperations.TypedTuple<Object> tuple : results) {
+                    String keyword = tuple.getValue() != null ? tuple.getValue().toString() : "";
                     keywords.add(new PopularKeywordDto(
-                        tuple.getValue(),
+                        keyword,
                         tuple.getScore() != null ? tuple.getScore().longValue() : 0L
                     ));
                 }

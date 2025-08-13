@@ -1,14 +1,12 @@
 package com.trevari.book.support;
 
 import com.trevari.book.dto.PopularKeywordDto;
-import lombok.Getter;
 
 import java.util.List;
 
 /**
  * 성능 비교 결과 클래스 (테스트 전용)
  */
-@Getter
 public class KeywordPerformanceResult {
     
     private final List<PopularKeywordDto> keywords;
@@ -19,6 +17,18 @@ public class KeywordPerformanceResult {
         this.keywords = keywords;
         this.method = method;
         this.executionTimeMs = executionTimeMs;
+    }
+    
+    public List<PopularKeywordDto> getKeywords() {
+        return keywords;
+    }
+    
+    public String getMethod() {
+        return method;
+    }
+    
+    public long getExecutionTimeMs() {
+        return executionTimeMs;
     }
     
     @Override
