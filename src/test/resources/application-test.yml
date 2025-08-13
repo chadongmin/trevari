@@ -22,6 +22,9 @@ spring:
     console:
       enabled: true
 
+  cache:
+    type: simple  # 테스트에서는 simple cache 사용 (Redis 없이)
+
 logging:
   level:
     com.trevari: DEBUG
