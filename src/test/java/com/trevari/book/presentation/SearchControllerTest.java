@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trevari.book.application.BookService;
 import com.trevari.book.application.SearchKeywordService;
 import com.trevari.book.domain.SearchKeyword;
+import com.trevari.book.dto.PopularKeywordDto;
 import com.trevari.global.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -51,22 +52,13 @@ class SearchControllerTest {
     @Test
     @DisplayName("인기 검색 키워드를 성공적으로 조회할 수 있다")
     void getPopularKeywords_ShouldReturnPopularKeywords() throws Exception {
-        // Given
-        List<SearchKeyword> mockKeywords = Arrays.asList(
-                SearchKeyword.builder()
-                        .keyword("java")
-                        .searchCount(100L)
-                        .build(),
-                SearchKeyword.builder()
-                        .keyword("spring")
-                        .searchCount(80L)
-                        .build(),
-                SearchKeyword.builder()
-                        .keyword("javascript")
-                        .searchCount(70L)
-                        .build()
+        // Given - Redis 기반 DTO 사용
+        List<PopularKeywordDto> mockKeywords = Arrays.asList(
+                new PopularKeywordDto("java", 100L),
+                new PopularKeywordDto("spring", 80L),
+                new PopularKeywordDto("javascript", 70L)
         );
-        given(searchKeywordService.getTopSearchKeywords()).willReturn(mockKeywords);
+        given(searchKeywordService.getTopSearchKeywordsFromRedis(10)).willReturn(mockKeywords);
 
         // When & Then
         mockMvc.perform(get("/api/search/popular")
@@ -87,8 +79,8 @@ class SearchControllerTest {
     @Test
     @DisplayName("검색 키워드가 없을 때 빈 배열을 반환한다")
     void getPopularKeywords_WhenNoKeywords_ShouldReturnEmptyArray() throws Exception {
-        // Given
-        given(searchKeywordService.getTopSearchKeywords()).willReturn(Collections.emptyList());
+        // Given - Redis 기반 메서드 사용
+        given(searchKeywordService.getTopSearchKeywordsFromRedis(10)).willReturn(Collections.emptyList());
 
         // When & Then
         mockMvc.perform(get("/api/search/popular")

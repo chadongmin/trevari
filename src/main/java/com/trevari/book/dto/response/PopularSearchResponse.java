@@ -3,6 +3,7 @@ package com.trevari.book.dto.response;
 
 
 import com.trevari.book.domain.SearchKeyword;
+import com.trevari.book.dto.PopularKeywordDto;
 
 import java.util.List;
 
@@ -47,6 +48,15 @@ public record PopularSearchResponse(
     public static PopularSearchResponse fromSearchKeywords(List<SearchKeyword> searchKeywords) {
         List<PopularKeyword> keywords = searchKeywords.stream()
                 .map(PopularKeyword::from)
+                .toList();
+        
+        return new PopularSearchResponse(keywords);
+    }
+    
+    // Redis DTO를 위한 메서드 추가
+    public static PopularSearchResponse fromDto(List<PopularKeywordDto> popularKeywordDtos) {
+        List<PopularKeyword> keywords = popularKeywordDtos.stream()
+                .map(dto -> new PopularKeyword(dto.getKeyword(), dto.getCount()))
                 .toList();
         
         return new PopularSearchResponse(keywords);

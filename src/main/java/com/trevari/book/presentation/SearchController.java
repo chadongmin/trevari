@@ -2,7 +2,7 @@ package com.trevari.book.presentation;
 
 import com.trevari.book.application.BookService;
 import com.trevari.book.application.SearchKeywordService;
-import com.trevari.book.domain.SearchKeyword;
+import com.trevari.book.dto.PopularKeywordDto;
 import com.trevari.book.dto.response.BookSearchResponse;
 import com.trevari.book.dto.response.PopularSearchResponse;
 import com.trevari.book.exception.BookException;
@@ -117,7 +117,7 @@ public class SearchController {
         
         return ApiResponse.ok(response, "All books retrieved successfully");
     }
-
+    
     /**
      * 인기 검색 키워드 조회 (상위 10개)
      *
@@ -134,10 +134,11 @@ public class SearchController {
     @GetMapping("/popular")
     @RateLimit(limit = 20, window = 1) // 20 requests per minute per IP  
     public ResponseEntity<ApiResponse<PopularSearchResponse>> getPopularKeywords() {
-        log.info("Request to get popular search keywords");
+        log.info("SearchKeywordService class: {}", searchKeywordService.getClass().getName());
         
-        List<SearchKeyword> topKeywords = searchKeywordService.getTopSearchKeywords();
-        PopularSearchResponse response = PopularSearchResponse.from(topKeywords);
+        List<PopularKeywordDto> topKeywords = searchKeywordService.getTopSearchKeywordsFromRedis(10);
+        log.info("Retrieved {} keywords from Redis method", topKeywords.size());
+        PopularSearchResponse response = PopularSearchResponse.fromDto(topKeywords);
         
         return ApiResponse.ok(response, "Popular search keywords retrieved successfully");
     }
