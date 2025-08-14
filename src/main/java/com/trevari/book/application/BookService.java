@@ -74,4 +74,26 @@ public class BookService {
             throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
         }
     }
+
+    /**
+     * 전체 도서 목록 조회 (페이징)
+     *
+     * @param pageable 페이징 정보
+     * @return 전체 도서 목록
+     */
+    public BookSearchResponse getAllBooks(Pageable pageable) {
+        log.info("Getting all books - page: {}, size: {}",
+            pageable.getPageNumber(), pageable.getPageSize());
+        
+        long startTime = System.currentTimeMillis();
+        
+        // 전체 도서를 빈 문자열로 검색하여 캐시 활용
+        CacheableBookSearchResult cachedResult = bookCacheService.getAllBooksCached(pageable);
+        
+        long executionTime = System.currentTimeMillis() - startTime;
+        log.info("All books retrieval completed in {}ms, found {} books",
+            executionTime, cachedResult.getBooks().size());
+        
+        return cachedResult.toResponse(executionTime);
+    }
 }

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도서 검색</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .search-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .search-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .popular-keywords {
+            margin-top: 20px;
+        }
+
+        .popular-keywords h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .keyword-tag {
+            padding: 6px 12px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            color: #666;
+        }
+
+        .keyword-tag:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .results-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .results-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .search-metadata {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .search-query {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .search-stats {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .book-list {
+            min-height: 400px;
+        }
+
+        .book-item {
+            display: flex;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.3s;
+        }
+
+        .book-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .book-item:last-child {
+            border-bottom: none;
+        }
+
+        .book-image {
+            width: 80px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 20px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .book-info {
+            flex: 1;
+        }
+
+        .book-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            line-height: 1.3;
+        }
+
+        .book-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .book-meta {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 4px;
+        }
+
+        .book-author {
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            display: none;
+        }
+
+        .no-results.show {
+            display: block;
+        }
+
+        .pagination-info {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .book-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .book-image {
+                margin: 0 auto 15px auto;
+            }
+
+            .search-metadata {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 도서 검색</h1>
+            <p>원하는 도서를 검색해보세요</p>
+        </div>
+
+        <div class="search-container">
+            <form class="search-form" id="searchForm">
+                <input type="text" 
+                       class="search-input" 
+                       id="searchInput" 
+                       placeholder="도서 제목, 저자, 출판사를 검색하세요..."
+                       th:value="${searchQuery}"
+                       autocomplete="off">
+                <button type="submit" class="search-btn">검색</button>
+            </form>
+            
+            <div class="search-info">
+                <p>💡 검색 팁: '|' 로 OR 검색, '-'로 NOT 검색이 가능합니다. (예: "자바|파이썬", "프로그래밍-입문")</p>
+            </div>
+
+            <div class="popular-keywords" id="popularKeywords">
+                <h3>🔥 인기 검색어</h3>
+                <div class="keyword-tags" id="keywordTags">
+                    <!-- 인기 검색어가 여기에 로드됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="results-container" id="resultsContainer" style="display: none;">
+            <div class="results-header">
+                <div class="search-metadata">
+                    <div class="search-query" id="displaySearchQuery"></div>
+                    <div class="search-stats" id="searchStats"></div>
+                </div>
+            </div>
+            
+            <div class="book-list" id="bookList">
+                <!-- 검색 결과가 여기에 추가됩니다 -->
+            </div>
+            
+            <div class="loading" id="loading">
+                <p>📖 도서를 검색하고 있습니다...</p>
+            </div>
+            
+            <div class="no-results" id="noResults">
+                <h3>😕 검색 결과가 없습니다</h3>
+                <p>다른 키워드로 검색해보세요.</p>
+            </div>
+            
+            <div class="pagination-info" id="paginationInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        class BookSearch {
+            constructor() {
+                this.currentPage = 1;
+                this.hasMore = true;
+                this.loading = false;
+                this.searchQuery = '';
+                this.isShowingAllBooks = false;
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.loadPopularKeywords();
+                this.loadAllBooks(); // 페이지 로딩 시 전체 목록 표시
+            }
+
+            initializeElements() {
+                this.searchForm = document.getElementById('searchForm');
+                this.searchInput = document.getElementById('searchInput');
+                this.resultsContainer = document.getElementById('resultsContainer');
+                this.bookList = document.getElementById('bookList');
+                this.loadingElement = document.getElementById('loading');
+                this.noResultsElement = document.getElementById('noResults');
+                this.displaySearchQuery = document.getElementById('displaySearchQuery');
+                this.searchStats = document.getElementById('searchStats');
+                this.paginationInfo = document.getElementById('paginationInfo');
+                this.keywordTags = document.getElementById('keywordTags');
+            }
+
+            bindEvents() {
+                this.searchForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.performSearch();
+                });
+
+                // 무한 스크롤 이벤트
+                window.addEventListener('scroll', () => {
+                    if (this.shouldLoadMore()) {
+                        this.loadMore();
+                    }
+                });
+
+                // Enter 키 이벤트
+                this.searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.performSearch();
+                    }
+                });
+            }
+
+            shouldLoadMore() {
+                if (this.loading || !this.hasMore) {
+                    return false;
+                }
+
+                // 검색 결과가 있거나 전체 목록을 보고 있을 때만 무한 스크롤 활성화
+                if (!this.searchQuery && !this.isShowingAllBooks) {
+                    return false;
+                }
+
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const windowHeight = window.innerHeight;
+                const documentHeight = document.documentElement.scrollHeight;
+
+                return scrollTop + windowHeight >= documentHeight - 1000;
+            }
+
+            async performSearch(resetResults = true) {
+                const query = this.searchInput.value.trim();
+                
+                if (!query) {
+                    alert('검색어를 입력해주세요.');
+                    return;
+                }
+
+                if (resetResults) {
+                    this.currentPage = 1;
+                    this.hasMore = true;
+                    this.searchQuery = query;
+                    this.isShowingAllBooks = false;
+                    this.bookList.innerHTML = '';
+                    this.hideNoResults();
+                }
+
+                this.showLoading();
+                
+                try {
+                    const response = await fetch(`/api/search/books?keyword=${encodeURIComponent(query)}&page=${this.currentPage}&size=20`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.handleSearchResults(data.data, resetResults);
+                    } else {
+                        throw new Error(data.message || '검색 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    alert('검색 중 오류가 발생했습니다: ' + error.message);
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            async loadAllBooks(resetResults = true) {
+                if (resetResults) {
+                    this.currentPage = 1;
+                    this.hasMore = true;
+                    this.searchQuery = '';
+                    this.isShowingAllBooks = true;
+                    this.bookList.innerHTML = '';
+                    this.hideNoResults();
+                }
+
+                this.showLoading();
+                
+                try {
+                    const response = await fetch(`/api/search/all?page=${this.currentPage}&size=20`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.handleAllBooksResults(data.data, resetResults);
+                    } else {
+                        throw new Error(data.message || '도서 목록 조회 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Load all books error:', error);
+                    console.log('도서 목록을 불러오는데 실패했습니다:', error.message);
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            handleSearchResults(data, resetResults) {
+                const { books, pageInfo, searchMetadata, searchQuery } = data;
+
+                if (resetResults) {
+                    this.displaySearchQuery.textContent = `"${searchQuery}" 검색 결과`;
+                    this.updateSearchStats(pageInfo, searchMetadata);
+                    this.resultsContainer.style.display = 'block';
+                }
+
+                if (books && books.length > 0) {
+                    this.appendBooks(books);
+                    this.currentPage++;
+                    this.hasMore = this.currentPage <= pageInfo.totalPages;
+                    this.updatePaginationInfo(pageInfo);
+                } else if (resetResults) {
+                    this.showNoResults();
+                }
+            }
+
+            handleAllBooksResults(data, resetResults) {
+                const { books, pageInfo, searchMetadata } = data;
+
+                if (resetResults) {
+                    this.displaySearchQuery.textContent = '📚 전체 도서 목록';
+                    this.updateAllBooksStats(pageInfo, searchMetadata);
+                    this.resultsContainer.style.display = 'block';
+                }
+
+                if (books && books.length > 0) {
+                    this.appendBooks(books);
+                    this.currentPage++;
+                    this.hasMore = this.currentPage <= pageInfo.totalPages;
+                    this.updatePaginationInfo(pageInfo);
+                } else if (resetResults) {
+                    this.showNoResults();
+                }
+            }
+
+            appendBooks(books) {
+                books.forEach(book => {
+                    const bookElement = this.createBookElement(book);
+                    this.bookList.appendChild(bookElement);
+                });
+            }
+
+            createBookElement(book) {
+                const bookDiv = document.createElement('div');
+                bookDiv.className = 'book-item';
+                
+                const imageUrl = book.imageUrl || 'https://via.placeholder.com/80x120/f0f0f0/999999?text=NO+IMAGE';
+                const authors = Array.isArray(book.authors) ? book.authors.join(', ') : (book.author || '저자 미상');
+                
+                bookDiv.innerHTML = `
+                    <div class="book-image">
+                        <img src="${imageUrl}" alt="${this.escapeHtml(book.title)}" 
+                             onerror="this.onerror=null; this.src='https://via.placeholder.com/80x120/f0f0f0/999999?text=📖';"
+                             style="width: 80px; height: 120px; object-fit: cover;">
+                    </div>
+                    <div class="book-info">
+                        <div class="book-title">${this.escapeHtml(book.title)}</div>
+                        ${book.subtitle ? `<div class="book-subtitle">${this.escapeHtml(book.subtitle)}</div>` : ''}
+                        <div class="book-meta">
+                            <span class="book-author">저자: ${this.escapeHtml(authors)}</span>
+                        </div>
+                        <div class="book-meta">출판사: ${this.escapeHtml(book.publisher)}</div>
+                        <div class="book-meta">출간일: ${book.publishedDate}</div>
+                        <div class="book-meta">ISBN: ${book.isbn}</div>
+                    </div>
+                `;
+                
+                return bookDiv;
+            }
+
+            updateSearchStats(pageInfo, searchMetadata) {
+                const strategy = this.getStrategyText(searchMetadata.strategy);
+                this.searchStats.innerHTML = `
+                    총 ${pageInfo.totalElements}권 검색 
+                    (${searchMetadata.executionTimeMs}ms, ${strategy})
+                `;
+            }
+
+            updateAllBooksStats(pageInfo, searchMetadata) {
+                this.searchStats.innerHTML = `
+                    총 ${pageInfo.totalElements}권의 도서 
+                    (${searchMetadata.executionTimeMs}ms)
+                `;
+            }
+
+            getStrategyText(strategy) {
+                const strategyMap = {
+                    'SIMPLE': '기본 검색',
+                    'OR_OPERATION': 'OR 검색',
+                    'NOT_OPERATION': 'NOT 검색',
+                    'ALL': '전체 조회'
+                };
+                return strategyMap[strategy] || strategy;
+            }
+
+            updatePaginationInfo(pageInfo) {
+                this.paginationInfo.textContent = 
+                    `${pageInfo.currentPage} / ${pageInfo.totalPages} 페이지`;
+            }
+
+            async loadMore() {
+                if (this.loading || !this.hasMore) return;
+                
+                this.loading = true;
+                
+                if (this.isShowingAllBooks) {
+                    await this.loadAllBooks(false);
+                } else {
+                    await this.performSearch(false);
+                }
+                
+                this.loading = false;
+            }
+
+            async loadPopularKeywords() {
+                try {
+                    const response = await fetch('/api/search/popular');
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.data.keywords) {
+                        this.displayPopularKeywords(data.data.keywords);
+                    }
+                } catch (error) {
+                    console.error('인기 검색어 로드 실패:', error);
+                }
+            }
+
+            displayPopularKeywords(keywords) {
+                this.keywordTags.innerHTML = '';
+                
+                keywords.slice(0, 10).forEach(keyword => {
+                    const tag = document.createElement('a');
+                    tag.className = 'keyword-tag';
+                    tag.href = '#';
+                    tag.textContent = `${keyword.keyword} (${keyword.count})`;
+                    tag.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.searchInput.value = keyword.keyword;
+                        this.performSearch();
+                    });
+                    this.keywordTags.appendChild(tag);
+                });
+            }
+
+            showLoading() {
+                this.loading = true;
+                this.loadingElement.classList.add('show');
+            }
+
+            hideLoading() {
+                this.loading = false;
+                this.loadingElement.classList.remove('show');
+            }
+
+            showNoResults() {
+                this.noResultsElement.classList.add('show');
+            }
+
+            hideNoResults() {
+                this.noResultsElement.classList.remove('show');
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            new BookSearch();
+        });
+    </script>
+</body>
+</html>

@@ -12,7 +12,8 @@ public record BookResponse(
     List<String> authors,
     String publisher,
     @JsonFormat(pattern = "yyyy-MM-dd")
-    LocalDate publishedDate
+    LocalDate publishedDate,
+    String imageUrl
 ) {
     
     public static BookResponse from(Book book) {
@@ -22,7 +23,8 @@ public record BookResponse(
             book.getSubtitle(),
             book.getPublicationInfo() != null ? book.getPublicationInfo().getAuthors() : List.of(),
             book.getPublicationInfo() != null ? book.getPublicationInfo().getPublisher() : "",
-            book.getPublicationInfo() != null ? book.getPublicationInfo().getPublishedDate() : null
+            book.getPublicationInfo() != null ? book.getPublicationInfo().getPublishedDate() : null,
+            book.getImageUrl()
         );
     }
 }

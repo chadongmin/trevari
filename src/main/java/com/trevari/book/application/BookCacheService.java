@@ -100,6 +100,67 @@ public class BookCacheService {
     }
     
     /**
+     * 전체 도서 목록 캐시 처리 (String 기반 Redis 캐싱)
+     * 
+     * @param pageable 페이징 정보
+     * @return 캐시된 전체 도서 목록
+     */
+    public CacheableBookSearchResult getAllBooksCached(Pageable pageable) {
+        String cacheKey = "bookSearch:all:page:" + pageable.getPageNumber() + ":size:" + pageable.getPageSize();
+        
+        try {
+            // 캐시에서 조회
+            String cachedValue = stringRedisTemplate.opsForValue().get(cacheKey);
+            if (cachedValue != null) {
+                log.debug("Cache HIT for all books");
+                return objectMapper.readValue(cachedValue, CacheableBookSearchResult.class);
+            }
+            
+            log.debug("Cache MISS for all books");
+            
+            // 전체 도서 조회
+            Page<Book> bookPage = bookRepository.findAll(pageable);
+            
+            // 응답 객체 생성 (execution time 제외)
+            PageInfo pageInfo = PageInfo.of(bookPage);
+            
+            CacheableBookSearchResult result = CacheableBookSearchResult.from(
+                "", // 전체 조회이므로 빈 쿼리
+                pageInfo,
+                bookPage.getContent(),
+                "ALL"
+            );
+            
+            // 캐시에 저장 (TTL 10분 - 전체 목록은 자주 바뀌지 않으므로 길게)
+            String jsonValue = objectMapper.writeValueAsString(result);
+            stringRedisTemplate.opsForValue().set(cacheKey, jsonValue, Duration.ofMinutes(10));
+            log.debug("Cached all books result");
+            
+            return result;
+            
+        } catch (JsonProcessingException e) {
+            log.error("JSON processing error for all books", e);
+            // 캐시 오류 시 DB에서 직접 조회
+            return executeAllBooksSearchWithoutCache(pageable);
+        }
+    }
+    
+    /**
+     * 캐시 없이 전체 도서 조회 (fallback)
+     */
+    private CacheableBookSearchResult executeAllBooksSearchWithoutCache(Pageable pageable) {
+        Page<Book> bookPage = bookRepository.findAll(pageable);
+        PageInfo pageInfo = PageInfo.of(bookPage);
+        
+        return CacheableBookSearchResult.from(
+            "",
+            pageInfo,
+            bookPage.getContent(),
+            "ALL"
+        );
+    }
+
+    /**
      * 도서 상세 정보 캐시 처리 (String 기반 Redis 캐싱)
      * 
      * @param isbn 도서 ISBN

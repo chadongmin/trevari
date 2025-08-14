@@ -28,6 +28,9 @@ public class Book {
     @Schema(description = "도서 부제목", example = "Lambdas, streams, functional and reactive programming")
     private String subtitle;
 
+    @Schema(description = "도서 이미지 URL", example = "https://books.google.com/books/content?id=0pkyCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api")
+    private String imageUrl;
+
     @Embedded
     @Schema(description = "출판 정보")
     private PublicationInfo publicationInfo;
