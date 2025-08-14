@@ -31,7 +31,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         // 데이터 조회
         List<Book> books = queryFactory
                 .selectFrom(book)
-                .leftJoin(book.publicationInfo.authors).fetchJoin()
+                .leftJoin(book.bookAuthors).fetchJoin()
                 .where(searchCondition)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -42,7 +42,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         Long totalCount = queryFactory
                 .select(book.countDistinct())
                 .from(book)
-                .leftJoin(book.publicationInfo.authors)
+                .leftJoin(book.bookAuthors)
                 .where(searchCondition)
                 .fetchOne();
         
@@ -69,7 +69,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         // 데이터 조회
         List<Book> books = queryFactory
                 .selectFrom(book)
-                .leftJoin(book.publicationInfo.authors).fetchJoin()
+                .leftJoin(book.bookAuthors).fetchJoin()
                 .where(orCondition)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -80,7 +80,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         Long totalCount = queryFactory
                 .select(book.countDistinct())
                 .from(book)
-                .leftJoin(book.publicationInfo.authors)
+                .leftJoin(book.bookAuthors)
                 .where(orCondition)
                 .fetchOne();
         
@@ -105,7 +105,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         // 데이터 조회
         List<Book> books = queryFactory
                 .selectFrom(book)
-                .leftJoin(book.publicationInfo.authors).fetchJoin()
+                .leftJoin(book.bookAuthors).fetchJoin()
                 .where(notCondition)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -116,7 +116,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         Long totalCount = queryFactory
                 .select(book.countDistinct())
                 .from(book)
-                .leftJoin(book.publicationInfo.authors)
+                .leftJoin(book.bookAuthors)
                 .where(notCondition)
                 .fetchOne();
         
@@ -138,9 +138,9 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         BooleanExpression titleCondition = book.title.lower().contains(lowerKeyword);
         BooleanExpression subtitleCondition = book.subtitle.coalesce("").lower().contains(lowerKeyword);
         
-        // 저자명 검색: JPQL EXISTS를 사용하여 authors 컬렉션 검색
+        // 저자명 검색: BookAuthor와 Author 엔티티를 통한 검색
         BooleanExpression authorCondition = Expressions.booleanTemplate(
-            "exists (select 1 from Book b join b.publicationInfo.authors a where b = {0} and lower(a) like {1})",
+            "exists (select 1 from BookAuthor ba join ba.author a where ba.book = {0} and lower(a.name) like {1})",
             book,
             "%" + lowerKeyword + "%"
         );

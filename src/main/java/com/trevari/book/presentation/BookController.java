@@ -61,20 +61,29 @@ public class BookController implements BookApi {
     @GetMapping
     @RateLimit(limit = 100, window = 1) // 100 requests per minute per IP
     public ResponseEntity<ApiResponse<BookSearchResponse>> searchBooks(
-            @RequestParam String keyword,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
 
+        // keyword가 비어있으면 전체 도서 조회로 처리
         if (StringUtils.isBlank(keyword)) {
-            throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
+            log.info("Request to get all books - page: {}, size: {}", page, size);
+            keyword = null; // null로 설정하여 BookService에서 전체 조회 처리
+        } else {
+            log.info("Request to search books - keyword: {}, page: {}, size: {}", keyword, page, size);
         }
-
-        log.info("Request to search books - keyword: {}, page: {}, size: {}", keyword, page, size);
 
         // 페이지 번호를 0 기반으로 변환 (Spring Data는 0부터 시작)
         Pageable pageable = PageRequest.of(page - 1, size);
         
-        BookSearchResponse response = bookService.searchBooks(keyword, pageable);
+        BookSearchResponse response;
+        if (keyword == null) {
+            // 전체 도서 목록 조회
+            response = bookService.getAllBooks(pageable);
+        } else {
+            // 키워드 검색
+            response = bookService.searchBooks(keyword, pageable);
+        }
 
         return ApiResponse.ok(response, "Books search completed successfully");
     }

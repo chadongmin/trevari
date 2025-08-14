@@ -59,7 +59,6 @@ class RateLimitIntegrationTest {
                 .title("Test Book")
                 .subtitle("A test book for rate limiting")
                 .publicationInfo(PublicationInfo.builder()
-                        .authors(List.of("Test Author"))
                         .publisher("Test Publisher")
                         .publishedDate(LocalDate.of(2023, 1, 1))
                         .build())

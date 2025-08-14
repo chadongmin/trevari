@@ -41,7 +41,6 @@ class BookIntegrationTest extends IntegrationTestSupport {
                 .title("Java in Action")
                 .subtitle("Lambdas, streams, functional and reactive programming")
                 .publicationInfo(PublicationInfo.builder()
-                        .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft"))
                         .publisher("Manning Publications")
                         .publishedDate(LocalDate.of(2020, 1, 1))
                         .build())

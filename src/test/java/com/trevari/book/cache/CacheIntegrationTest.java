@@ -57,7 +57,6 @@ class CacheIntegrationTest {
                 .title("Test Book")
                 .subtitle("A test book for caching")
                 .publicationInfo(PublicationInfo.builder()
-                        .authors(List.of("Test Author"))
                         .publisher("Test Publisher")
                         .publishedDate(LocalDate.of(2023, 1, 1))
                         .build())
