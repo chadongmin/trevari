@@ -24,6 +24,12 @@ spring:
 
   cache:
     type: simple  # 테스트에서는 simple cache 사용 (Redis 없이)
+    
+  data:
+    redis:
+      host: localhost
+      port: 16379  # Docker Redis 포트
+      timeout: 2000ms
 
 logging:
   level:
