@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS book (
     title VARCHAR(1000) NOT NULL,
     subtitle VARCHAR(1000),
     publisher VARCHAR(500) NOT NULL,
-    published_date DATE NOT NULL
+    published_date DATE NOT NULL,
+    image_url VARCHAR(1000)
 );
 
 CREATE TABLE IF NOT EXISTS book_authors (

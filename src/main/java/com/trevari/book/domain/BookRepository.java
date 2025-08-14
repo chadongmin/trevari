@@ -11,6 +11,14 @@ public interface BookRepository {
     Optional<Book> findByIsbn(String isbn);
 
     /**
+     * 전체 도서를 페이징하여 조회합니다.
+     * 
+     * @param pageable 페이징 정보
+     * @return 전체 도서 페이지
+     */
+    Page<Book> findAll(Pageable pageable);
+
+    /**
      * 검색 쿼리에 따라 도서를 검색합니다.
      * 
      * @param searchQuery 검색 쿼리 객체
