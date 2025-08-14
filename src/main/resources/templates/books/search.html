@@ -609,7 +609,7 @@
                     const tag = document.createElement('a');
                     tag.className = 'keyword-tag';
                     tag.href = '#';
-                    tag.textContent = `${keyword.keyword} (${keyword.count})`;
+                    tag.textContent = `${keyword.keyword} (${keyword.searchCount})`;
                     tag.addEventListener('click', (e) => {
                         e.preventDefault();
                         this.searchInput.value = keyword.keyword;
