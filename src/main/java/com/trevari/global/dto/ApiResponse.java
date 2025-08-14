@@ -1,5 +1,6 @@
 package com.trevari.global.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ public record ApiResponse<T>(
         @Schema(description = "응답 데이터")
         T data,
         @Schema(description = "응답 시간", example = "2023-12-01T10:30:00")
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime timestamp
 ) {
     // 성공 응답 생성

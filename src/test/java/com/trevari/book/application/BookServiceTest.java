@@ -28,6 +28,12 @@ class BookServiceTest {
 
     @Mock
     private BookRepository bookRepository;
+    
+    @Mock
+    private SearchKeywordService searchKeywordService;
+    
+    @Mock
+    private BookCacheService bookCacheService;
 
     @InjectMocks
     private BookService bookService;
@@ -53,7 +59,7 @@ class BookServiceTest {
     void getBookByIsbn_Success() {
         // given
         String isbn = "9781617297397";
-        given(bookRepository.findByIsbn(isbn)).willReturn(Optional.of(sampleBook));
+        given(bookCacheService.getCachedBookByIsbn(isbn)).willReturn(sampleBook);
 
         // when
         Book result = bookService.getBookByIsbn(isbn);
@@ -67,7 +73,7 @@ class BookServiceTest {
         assertThat(result.getPublicationInfo().getPublisher()).isEqualTo("Manning Publications");
         assertThat(result.getPublicationInfo().getPublishedDate()).isEqualTo(LocalDate.of(2020, 1, 1));
 
-        verify(bookRepository).findByIsbn(isbn);
+        verify(bookCacheService).getCachedBookByIsbn(isbn);
     }
 
     @Test
@@ -75,7 +81,7 @@ class BookServiceTest {
     void getBookByIsbn_BookNotFound() {
         // given
         String isbn = "nonexistent-isbn";
-        given(bookRepository.findByIsbn(isbn)).willReturn(Optional.empty());
+        given(bookCacheService.getCachedBookByIsbn(isbn)).willReturn(null);
 
         // when & then
         assertThatThrownBy(() -> bookService.getBookByIsbn(isbn))
@@ -83,14 +89,14 @@ class BookServiceTest {
                 .extracting("exceptionCode")
                 .isEqualTo(BookExceptionCode.BOOK_NOT_FOUND);
 
-        verify(bookRepository).findByIsbn(isbn);
+        verify(bookCacheService).getCachedBookByIsbn(isbn);
     }
 
     @Test
     @DisplayName("null ISBN으로 조회시 repository 호출")
     void getBookByIsbn_NullIsbn() {
         // given
-        given(bookRepository.findByIsbn(null)).willReturn(Optional.empty());
+        given(bookCacheService.getCachedBookByIsbn(null)).willReturn(null);
 
         // when & then
         assertThatThrownBy(() -> bookService.getBookByIsbn(null))
@@ -98,6 +104,6 @@ class BookServiceTest {
                 .extracting("exceptionCode")
                 .isEqualTo(BookExceptionCode.BOOK_NOT_FOUND);
 
-        verify(bookRepository).findByIsbn(null);
+        verify(bookCacheService).getCachedBookByIsbn(null);
     }
 }

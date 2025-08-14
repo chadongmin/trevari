@@ -63,6 +63,7 @@ public class RateLimitService {
         long currentTime = System.currentTimeMillis() / 1000; // Unix timestamp in seconds
         
         try {
+            @SuppressWarnings("unchecked")
             List<Long> result = redisTemplate.execute(
                 rateLimitScript,
                 List.of(redisKey),
@@ -109,9 +110,9 @@ public class RateLimitService {
             
             // 현재 윈도우 내의 요청 수
             Long currentRequests = redisTemplate.opsForZSet().zCard(redisKey);
-            long remaining = Math.max(0, currentRequests != null ? currentRequests : 0);
+            long used = currentRequests != null ? currentRequests : 0;
             
-            return new RateLimitInfo(remaining, windowSeconds);
+            return new RateLimitInfo(used, windowSeconds);
         } catch (Exception e) {
             log.error("Error getting rate limit info for key: {}", key, e);
             return new RateLimitInfo(0, windowSeconds);
