@@ -19,9 +19,10 @@ import lombok.NoArgsConstructor;
 @Schema(description = "출판 정보")
 public class PublicationInfo {
     
-    @ElementCollection
-    @Schema(description = "저자 목록", example = "[\"Raoul-Gabriel Urma\", \"Mario Fusco\"]")
-    private List<String> authors;
+    // 더 이상 사용하지 않음 - BookAuthor 엔티티로 대체됨
+    // @ElementCollection
+    // @Schema(description = "저자 목록", example = "[\"Raoul-Gabriel Urma\", \"Mario Fusco\"]")
+    // private List<String> authors;
     
     @Schema(description = "출판사", example = "Manning Publications")
     private String publisher;
@@ -30,36 +31,45 @@ public class PublicationInfo {
     private LocalDate publishedDate;
     
     /**
-     * 대표 저자(첫 번째 저자) 반환
+     * 대표 저자(첫 번째 저자) 반환 - 더 이상 사용되지 않음
+     * BookAuthor 엔티티를 통해 조회해야 함
      *
-     * @return 대표 저자명, 저자가 없으면 "Unknown Author"
+     * @return "Unknown Author"
      */
+    @Deprecated
     public String getPrimaryAuthor() {
-        if (authors == null || authors.isEmpty()) {
-            return "Unknown Author";
-        }
-        return authors.get(0);
+        return "Unknown Author";
     }
     
     /**
-     * 저자 목록을 문자열로 반환 (", "로 구분)
+     * 저자 목록 반환 - 더 이상 사용되지 않음
+     * BookAuthor 엔티티를 통해 조회해야 함
      *
-     * @return 저자 목록 문자열
+     * @return 빈 리스트
      */
+    @Deprecated
+    public List<String> getAuthors() {
+        return Collections.emptyList();
+    }
+    
+    /**
+     * 저자 목록을 문자열로 반환 - 더 이상 사용되지 않음
+     *
+     * @return "Unknown Author"
+     */
+    @Deprecated
     public String getAuthorsAsString() {
-        if (authors == null || authors.isEmpty()) {
-            return "Unknown Author";
-        }
-        return String.join(", ", authors);
+        return "Unknown Author";
     }
     
     /**
-     * 공동 저자 존재 여부 확인
+     * 공동 저자 존재 여부 확인 - 더 이상 사용되지 않음
      *
-     * @return 저자가 2명 이상이면 true
+     * @return false
      */
+    @Deprecated
     public boolean hasCoAuthors() {
-        return authors != null && authors.size() > 1;
+        return false;
     }
     
     /**
@@ -105,61 +115,43 @@ public class PublicationInfo {
     }
     
     /**
-     * 저자 검색 (대소문자 구분 없음)
+     * 저자 검색 - 더 이상 사용되지 않음
      *
      * @param searchName 검색할 저자명
-     * @return 해당 저자가 포함되어 있으면 true
+     * @return false
      */
+    @Deprecated
     public boolean containsAuthor(String searchName) {
-        if (authors == null || searchName == null) {
-            return false;
-        }
-        return authors.stream()
-            .anyMatch(author -> author.toLowerCase().contains(searchName.toLowerCase()));
+        return false;
     }
     
     /**
-     * 저자 목록 불변 리스트 반환
+     * 저자 목록 불변 리스트 반환 - 더 이상 사용되지 않음
      *
-     * @return 저자 목록의 불변 복사본
+     * @return 빈 리스트
      */
+    @Deprecated
     public List<String> getAuthorsUnmodifiable() {
-        if (authors == null) {
-            return Collections.emptyList();
-        }
-        return List.copyOf(authors);
+        return Collections.emptyList();
     }
     
     /**
-     * 빈 저자 목록 정리
+     * 빈 저자 목록 정리 - 더 이상 사용되지 않음
      *
-     * @return 빈 문자열이나 null 저자를 제거한 새로운 PublicationInfo
+     * @return 현재 인스턴스
      */
+    @Deprecated
     public PublicationInfo cleanAuthors() {
-        if (authors == null) {
-            return this;
-        }
-        
-        List<String> cleanedAuthors = authors.stream()
-            .filter(author -> author != null && !author.trim().isEmpty())
-            .map(String::trim)
-            .toList();
-        
-        return PublicationInfo.builder()
-            .authors(cleanedAuthors)
-            .publisher(publisher)
-            .publishedDate(publishedDate)
-            .build();
+        return this;
     }
     
     /**
-     * 출판 정보 유효성 검증
+     * 출판 정보 유효성 검증 (저자 정보 제외)
      *
      * @return 유효한 출판 정보이면 true
      */
     public boolean isValid() {
-        return (authors != null && !authors.isEmpty()) &&
-            (publisher != null && !publisher.trim().isEmpty()) &&
+        return (publisher != null && !publisher.trim().isEmpty()) &&
             (publishedDate != null && !publishedDate.isAfter(LocalDate.now()));
     }
 }

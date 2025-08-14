@@ -44,7 +44,6 @@ class BookJpaRepositoryTest {
                 .title("Java in Action")
                 .subtitle("Lambdas, streams, functional and reactive programming")
                 .publicationInfo(PublicationInfo.builder()
-                        .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco"))
                         .publisher("Manning Publications")
                         .publishedDate(LocalDate.of(2020, 1, 1))
                         .build())
@@ -55,7 +54,6 @@ class BookJpaRepositoryTest {
                 .title("Spring in Action")
                 .subtitle("Fifth Edition")
                 .publicationInfo(PublicationInfo.builder()
-                        .authors(List.of("Craig Walls"))
                         .publisher("Manning Publications")
                         .publishedDate(LocalDate.of(2020, 2, 1))
                         .build())
@@ -66,7 +64,6 @@ class BookJpaRepositoryTest {
                 .title("Learning Python")
                 .subtitle("Powerful Object-Oriented Programming")
                 .publicationInfo(PublicationInfo.builder()
-                        .authors(List.of("Mark Lutz"))
                         .publisher("O'Reilly Media")
                         .publishedDate(LocalDate.of(2020, 3, 1))
                         .build())
@@ -90,7 +87,7 @@ class BookJpaRepositoryTest {
         Book foundBook = result.get();
         assertThat(foundBook.getIsbn()).isEqualTo("9781617297397");
         assertThat(foundBook.getTitle()).isEqualTo("Java in Action");
-        assertThat(foundBook.getPublicationInfo().getAuthors()).containsExactly("Raoul-Gabriel Urma", "Mario Fusco");
+        assertThat(foundBook.getPublicationInfo().getAuthors()).isEmpty(); // Authors moved to BookAuthor entity
     }
     
     @Test
@@ -145,7 +142,7 @@ class BookJpaRepositoryTest {
         // Then
         assertThat(result).isNotEmpty();
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getPublicationInfo().getAuthors()).contains("Craig Walls");
+        assertThat(result.getContent().get(0).getPublicationInfo().getAuthors()).isEmpty(); // Authors moved to BookAuthor entity
     }
     
     @Test
