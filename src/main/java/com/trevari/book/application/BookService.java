@@ -10,6 +10,7 @@ import com.trevari.book.exception.BookExceptionCode;
 import com.trevari.global.dto.PageInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class BookService {
      * @return 조회된 도서 정보
      * @throws BookException 도서를 찾을 수 없는 경우
      */
+    @Cacheable(value = "bookDetail", key = "#isbn")
     public Book getBookByIsbn(String isbn) {
         log.debug("Finding book by ISBN: {}", isbn);
 
@@ -52,6 +54,7 @@ public class BookService {
      * @param pageable 페이징 정보
      * @return 검색 결과
      */
+    @Cacheable(value = "bookSearch", key = "#keyword + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public BookSearchResponse searchBooks(String keyword, Pageable pageable) {
         log.info("Searching books with keyword: {}, page: {}, size: {}", 
                 keyword, pageable.getPageNumber(), pageable.getPageSize());
