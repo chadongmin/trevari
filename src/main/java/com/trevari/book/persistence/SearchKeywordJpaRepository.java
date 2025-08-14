@@ -13,6 +13,11 @@ import java.util.Optional;
 
 @Repository
 public interface SearchKeywordJpaRepository extends JpaRepository<SearchKeyword, Long>, SearchKeywordRepository {
+    
+    @Override
+    default SearchKeyword saveSearchKeyword(SearchKeyword searchKeyword) {
+        return save(searchKeyword);
+    }
 
     Optional<SearchKeyword> findByKeyword(String keyword);
 

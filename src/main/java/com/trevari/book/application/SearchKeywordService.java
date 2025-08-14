@@ -14,8 +14,8 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class SearchKeywordService {
 
     private final SearchKeywordRepository searchKeywordRepository;
@@ -30,23 +30,21 @@ public class SearchKeywordService {
         if (keyword == null || keyword.trim().isEmpty()) {
             return;
         }
-
         String normalizedKeyword = keyword.trim().toLowerCase();
         log.debug("Recording search keyword: {}", normalizedKeyword);
 
+        //TODO Redis로 전환해서 동시성 문제 해결해야 할 듯 
         searchKeywordRepository.findByKeyword(normalizedKeyword)
                 .ifPresentOrElse(
                         existingKeyword -> {
-                            existingKeyword.incrementCount();
-                            log.debug("Incremented count for keyword: {} to {}", 
-                                    normalizedKeyword, existingKeyword.getSearchCount());
-                        },
-                        () -> {
+                            //있으면 카운트 + 1
+                            searchKeywordRepository.incrementSearchCount(normalizedKeyword);
+                        }, () -> {
+                            //없으면 새로 생성
                             SearchKeyword newKeyword = SearchKeyword.builder()
                                     .keyword(normalizedKeyword)
                                     .build();
-                            searchKeywordRepository.save(newKeyword);
-                            log.debug("Created new search keyword: {}", normalizedKeyword);
+                            searchKeywordRepository.saveSearchKeyword(newKeyword);
                         }
                 );
     }
