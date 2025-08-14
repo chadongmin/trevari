@@ -5,19 +5,20 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
 /**
- * OpenAPI 설정 클래스
+ * SpringDoc OpenAPI 설정 클래스
  */
 @Configuration
-public class OpenApiConfig {
+public class SpringDocConfig {
 
     @Bean
-    public OpenAPI openAPI() {
+    public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
                         .title("Book Search API")
@@ -37,5 +38,13 @@ public class OpenApiConfig {
                         new Server()
                                 .url("https://api.trevari.co.kr")
                                 .description("Production Server")));
+    }
+    
+    @Bean
+    public GroupedOpenApi bookApi() {
+        return GroupedOpenApi.builder()
+                .group("book-api")
+                .pathsToMatch("/api/**")
+                .build();
     }
 }
