@@ -147,4 +147,42 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         
         return titleCondition.or(subtitleCondition).or(authorCondition);
     }
+
+    @Override
+    public Page<Book> findByCategoryName(String categoryName, Pageable pageable) {
+        // 카테고리 검색 조건 생성
+        BooleanExpression categoryCondition = createCategorySearchCondition(categoryName);
+        
+        // 데이터 조회
+        List<Book> books = queryFactory
+                .selectFrom(book)
+                .join(book.categories)
+                .where(categoryCondition)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .distinct()
+                .fetch();
+        
+        // 총 개수 조회
+        Long totalCount = queryFactory
+                .select(book.countDistinct())
+                .from(book)
+                .join(book.categories)
+                .where(categoryCondition)
+                .fetchOne();
+        
+        return new PageImpl<>(books, pageable, totalCount != null ? totalCount : 0L);
+    }
+    
+    /**
+     * 카테고리 검색 조건을 생성하는 헬퍼 메서드
+     */
+    private BooleanExpression createCategorySearchCondition(String categoryName) {
+        if (categoryName == null || categoryName.trim().isEmpty()) {
+            return null;
+        }
+        
+        // QueryDSL을 사용한 카테고리 검색 - any() 메서드 사용
+        return book.categories.any().name.containsIgnoreCase(categoryName);
+    }
 }

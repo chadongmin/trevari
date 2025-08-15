@@ -26,4 +26,13 @@ public interface BookRepository {
      * @return 검색된 도서 페이지
      */
     Page<Book> searchBooks(SearchQuery searchQuery, Pageable pageable);
+
+    /**
+     * 카테고리별 도서를 조회합니다.
+     * 
+     * @param categoryName 카테고리명
+     * @param pageable 페이징 정보
+     * @return 카테고리별 도서 페이지
+     */
+    Page<Book> findByCategory(String categoryName, Pageable pageable);
 }
