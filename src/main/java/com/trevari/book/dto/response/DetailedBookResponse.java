@@ -7,13 +7,14 @@ import com.trevari.book.domain.BookFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Collections;
+import java.util.stream.Collectors;
 
 /**
- * 도서 상세 정보 응답 DTO (새로운 도메인 모델 정보 포함)
+ * 도서 상세 정보 응답 DTO
+ * Book 엔티티의 모든 정보를 포함하여 완전한 상세 정보를 제공
  */
 @Schema(description = "도서 상세 정보 응답")
-@JsonInclude(JsonInclude.Include.ALWAYS)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record DetailedBookResponse(
     @Schema(description = "도서 ISBN", example = "9781617297397")
     String isbn,
@@ -36,10 +37,7 @@ public record DetailedBookResponse(
     @Schema(description = "가격 정보")
     PriceResponse price,
     
-    @Schema(description = "기존 저자 목록 (하위 호환성)")
-    List<String> authors,
-    
-    @Schema(description = "저자 상세 정보")
+    @Schema(description = "저자 상세 정보 (역할 포함)")
     List<BookAuthorResponse> bookAuthors,
     
     @Schema(description = "카테고리 목록")
@@ -53,30 +51,71 @@ public record DetailedBookResponse(
     LocalDate publishedDate,
     
     @Schema(description = "도서 이미지 URL")
-    String imageUrl
+    String imageUrl,
+    
+    @Schema(description = "하위 호환성을 위한 저자명 목록")
+    List<String> authorNames
 ) {
     
+    /**
+     * Book 엔티티로부터 완전한 상세 정보 응답 DTO 생성
+     */
     public static DetailedBookResponse from(Book book) {
+        if (book == null) {
+            return null;
+        }
+        
+        // 가격 정보 처리
+        PriceResponse priceResponse = null;
+        if (book.getPrice() != null) {
+            priceResponse = PriceResponse.from(book.getPrice());
+        }
+        
+        // 저자 정보 처리
+        List<BookAuthorResponse> bookAuthorResponses = null;
+        List<String> authorNames = null;
+        
+        if (book.getBookAuthors() != null && !book.getBookAuthors().isEmpty()) {
+            bookAuthorResponses = book.getBookAuthors().stream()
+                .map(BookAuthorResponse::from)
+                .collect(Collectors.toList());
+            
+            authorNames = book.getBookAuthors().stream()
+                .map(bookAuthor -> bookAuthor.getAuthor() != null ? bookAuthor.getAuthor().getName() : "Unknown")
+                .collect(Collectors.toList());
+        }
+        
+        // 카테고리 정보 처리
+        List<CategoryResponse> categoryResponses = null;
+        if (book.getCategories() != null && !book.getCategories().isEmpty()) {
+            categoryResponses = book.getCategories().stream()
+                .map(category -> CategoryResponse.of(category.getId(), category.getName(), null))
+                .collect(Collectors.toList());
+        }
+        
+        // 출판 정보 처리
+        String publisher = null;
+        LocalDate publishedDate = null;
+        
+        if (book.getPublicationInfo() != null) {
+            publisher = book.getPublicationInfo().getNormalizedPublisher();
+            publishedDate = book.getPublicationInfo().getPublishedDate();
+        }
+        
         return new DetailedBookResponse(
             book.getIsbn(),
             book.getTitle(),
             book.getSubtitle(),
-            "곧 제공될 상세 설명", // 미래 구현 예정
-            450, // 예시 페이지 수
-            BookFormat.PAPERBACK, // 기본값
-            new PriceResponse(29000, "KRW"), // 예시 가격
-            // 기존 PublicationInfo의 authors (하위 호환성)
-            book.getPublicationInfo() != null ? book.getPublicationInfo().getAuthors() : List.of(),
-            // 새로운 BookAuthor 관계 정보 (미래 구현 예정)
-            Collections.emptyList(),
-            // 카테고리 정보 (미래 구현 예정)
-            List.of(
-                CategoryResponse.of(1L, "프로그래밍", 100L),
-                CategoryResponse.of(2L, "Java", 50L)
-            ),
-            book.getPublicationInfo() != null ? book.getPublicationInfo().getPublisher() : "",
-            book.getPublicationInfo() != null ? book.getPublicationInfo().getPublishedDate() : null,
-            book.getImageUrl()
+            book.getDescription(),
+            book.getPageCount(),
+            book.getFormat(),
+            priceResponse,
+            bookAuthorResponses,
+            categoryResponses,
+            publisher,
+            publishedDate,
+            book.getImageUrl(),
+            authorNames
         );
     }
 }

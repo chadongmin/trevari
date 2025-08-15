@@ -1,6 +1,7 @@
 package com.trevari.book.domain;
 
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,7 +17,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Price {
     
+    @Column(name = "amount")
     private Integer amount;
     
+    @Column(name = "currency")
     private String currency;
 }
