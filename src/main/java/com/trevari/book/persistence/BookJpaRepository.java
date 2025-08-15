@@ -29,4 +29,9 @@ public interface BookJpaRepository extends JpaRepository<Book, String>, BookRepo
                                                    pageable);
         };
     }
+
+    @Override
+    default Page<Book> findByCategory(String categoryName, Pageable pageable) {
+        return findByCategoryName(categoryName, pageable);
+    }
 }
