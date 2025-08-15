@@ -197,4 +197,66 @@ public class BookCacheService {
             return bookRepository.findByIsbn(isbn).orElse(null);
         }
     }
+
+    /**
+     * 카테고리별 도서 검색 결과 캐시 처리 (String 기반 Redis 캐싱)
+     * 
+     * @param categoryName 카테고리명
+     * @param pageable 페이징 정보
+     * @return 캐시된 검색 결과
+     */
+    public CacheableBookSearchResult getBooksByCategoryCached(String categoryName, Pageable pageable) {
+        String cacheKey = "bookSearch:category:" + categoryName + ":page:" + pageable.getPageNumber() + ":size:" + pageable.getPageSize();
+        
+        try {
+            // 캐시에서 조회
+            String cachedValue = stringRedisTemplate.opsForValue().get(cacheKey);
+            if (cachedValue != null) {
+                log.debug("Cache HIT for category: {}", categoryName);
+                return objectMapper.readValue(cachedValue, CacheableBookSearchResult.class);
+            }
+            
+            log.debug("Cache MISS for category: {}", categoryName);
+            
+            // 카테고리별 도서 검색
+            Page<Book> bookPage = bookRepository.findByCategory(categoryName, pageable);
+            
+            // 응답 객체 생성 (execution time 제외)
+            PageInfo pageInfo = PageInfo.of(bookPage);
+            
+            CacheableBookSearchResult result = CacheableBookSearchResult.from(
+                "category:" + categoryName,
+                pageInfo,
+                bookPage.getContent(),
+                "CATEGORY"
+            );
+            
+            // 캐시에 저장 (TTL 10분)
+            String jsonValue = objectMapper.writeValueAsString(result);
+            stringRedisTemplate.opsForValue().set(cacheKey, jsonValue, Duration.ofMinutes(10));
+            log.debug("Cached category search result for: {}", categoryName);
+            
+            return result;
+            
+        } catch (JsonProcessingException e) {
+            log.error("JSON processing error for category: {}", categoryName, e);
+            // 캐시 오류 시 DB에서 직접 조회
+            return executeCategorySearchWithoutCache(categoryName, pageable);
+        }
+    }
+    
+    /**
+     * 캐시 없이 카테고리별 도서 조회 (fallback)
+     */
+    private CacheableBookSearchResult executeCategorySearchWithoutCache(String categoryName, Pageable pageable) {
+        Page<Book> bookPage = bookRepository.findByCategory(categoryName, pageable);
+        PageInfo pageInfo = PageInfo.of(bookPage);
+        
+        return CacheableBookSearchResult.from(
+            "category:" + categoryName,
+            pageInfo,
+            bookPage.getContent(),
+            "CATEGORY"
+        );
+    }
 }
