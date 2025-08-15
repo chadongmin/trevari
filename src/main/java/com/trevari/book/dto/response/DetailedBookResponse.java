@@ -71,8 +71,8 @@ public record DetailedBookResponse(
             Collections.emptyList(),
             // 카테고리 정보 (미래 구현 예정)
             List.of(
-                new CategoryResponse(1L, "프로그래밍"),
-                new CategoryResponse(2L, "Java")
+                CategoryResponse.of(1L, "프로그래밍", 100L),
+                CategoryResponse.of(2L, "Java", 50L)
             ),
             book.getPublicationInfo() != null ? book.getPublicationInfo().getPublisher() : "",
             book.getPublicationInfo() != null ? book.getPublicationInfo().getPublishedDate() : null,
