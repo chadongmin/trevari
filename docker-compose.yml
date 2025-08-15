@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   mysql:
     image: mysql:8.0
@@ -16,6 +15,12 @@ services:
       - ./database/mysql/init:/docker-entrypoint-initdb.d
     networks:
       - network
+    healthcheck:
+      test: ["CMD", "mysql", "-u", "trevari", "-ptrevari1234", "-e", "SELECT 1;", "trevari"]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 15
 
   redis:
     image: redis:6.2.6-alpine
@@ -30,13 +35,15 @@ services:
     container_name: trevari-app
     restart: always
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/trevari?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+      SPRING_DATASOURCE_URL: jdbc:mysql://trevari:3306/trevari?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: trevari
       SPRING_DATASOURCE_PASSWORD: trevari1234
       SPRING_DATA_REDIS_HOST: redis

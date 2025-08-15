@@ -1,0 +1,133 @@
+#spring:
+#  application:
+#    name: trevari
+#
+#  datasource:
+#    url: jdbc:mysql://mysql:3306/trevari?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    username: trevari
+#    password: trevari1234
+#
+#  jpa:
+#    hibernate:
+#      ddl-auto: none
+#
+#    show-sql: false
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQLDialect
+#        format_sql: false
+#
+#    sql:
+#      init:
+#        mode: never
+#
+#  #    sql:
+#  #      init:
+#  #        mode: never
+#  #        enabled: false
+#  #        data-locations: classpath:non-existent.sql
+#  #        schema-locations: classpath:non-existent.sql
+#  #        continue-on-error: false
+#  #        platform: mysql
+#
+#  data:
+#    redis:
+#      host: redis
+#      port: 6379
+#      timeout: 2000ms
+#      lettuce:
+#        pool:
+#          max-active: 8
+#          max-wait: -1ms
+#          max-idle: 8
+#          min-idle: 0
+#
+#  cache:
+#    type: redis
+#    redis:
+#      time-to-live: 600000 # 10분 (milliseconds)
+#
+#server:
+#  port: 8080
+#
+#springdoc:
+#  api-docs:
+#    path: /v3/api-docs
+#    enabled: true
+#  swagger-ui:
+#    path: /swagger-ui.html
+#    enabled: true
+#    try-it-out-enabled: true
+#    operations-sorter: method
+#    tags-sorter: alpha
+#  show-actuator: false
+#
+#logging:
+#  level:
+#    com.trevari.bookapi: INFO
+#    org.springframework.web: INFO
+#    org.hibernate.SQL: INFO
+#    org.hibernate.type.descriptor.sql.BasicBinder: INFO
+
+spring:
+  application:
+    name: trevari
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/trevari?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: trevari
+    password: trevari1234
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  #  sql:
+  #    init:
+  #      mode: never
+
+  data:
+    redis:
+      host: localhost
+      port: 16379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000 # 10분 (milliseconds)
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    try-it-out-enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: false
+
+logging:
+  level:
+    com.trevari.bookapi: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
