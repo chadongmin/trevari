@@ -87,4 +87,32 @@ public class BookController implements BookApi {
 
         return ApiResponse.ok(response, "Books search completed successfully");
     }
+
+    /**
+     * 카테고리별 도서 검색
+     *
+     * @param categoryName 카테고리명
+     * @param page 페이지 번호 (1부터 시작)
+     * @param size 페이지 크기
+     * @return 검색 결과
+     */
+    @GetMapping("/category/{categoryName}")
+    @RateLimit(limit = 100, window = 1) // 100 requests per minute per IP
+    public ResponseEntity<ApiResponse<BookSearchResponse>> getBooksByCategory(
+            @PathVariable String categoryName,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        if (StringUtils.isBlank(categoryName)) {
+            throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
+        }
+
+        log.info("Request to get books by category - category: {}, page: {}, size: {}", categoryName, page, size);
+
+        // 페이지 번호를 0 기반으로 변환
+        Pageable pageable = PageRequest.of(page - 1, size);
+        BookSearchResponse response = bookService.getBooksByCategory(categoryName, pageable);
+
+        return ApiResponse.ok(response, String.format("Books for category '%s' retrieved successfully", categoryName));
+    }
 }
