@@ -4,6 +4,7 @@ import com.trevari.book.application.BookService;
 import com.trevari.book.domain.Book;
 import com.trevari.book.dto.response.BookResponse;
 import com.trevari.book.dto.response.BookSearchResponse;
+import com.trevari.book.dto.response.DetailedBookResponse;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
 import com.trevari.global.dto.ApiResponse;
@@ -28,25 +29,24 @@ public class BookController implements BookApi {
     private final BookService bookService;
 
     /**
-     * ISBN으로 도서 상세 조회
+     * ISBN으로 도서 상세 조회 (완전한 상세 정보 제공)
      *
      * @param isbn 도서 ISBN
-     * @return 도서 상세 정보
+     * @return 도서 상세 정보 (모든 필드 포함)
      */
     @Override
     @GetMapping("/{isbn}")
     @RateLimit(limit = 200, window = 1) // 200 requests per minute per IP
-    public ResponseEntity<ApiResponse<BookResponse>> getBookDetail(@PathVariable String isbn) {
+    public ResponseEntity<ApiResponse<DetailedBookResponse>> getBookDetail(@PathVariable String isbn) {
 
         if (StringUtils.isBlank(isbn)) {
             throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
         }
-        log.info("Request to get book detail - ISBN: {}", isbn);
+        log.info("Request to get book detailed information - ISBN: {}", isbn);
 
-        Book book = bookService.getBookByIsbn(isbn);
-        BookResponse bookResponse = BookResponse.from(book);
+        DetailedBookResponse detailedBook = bookService.getDetailedBookByIsbn(isbn);
 
-        return ApiResponse.ok(bookResponse, "Book retrieved successfully");
+        return ApiResponse.ok(detailedBook, "Book detailed information retrieved successfully");
     }
 
     /**

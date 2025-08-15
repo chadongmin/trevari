@@ -560,6 +560,12 @@
                 const bookDiv = document.createElement('div');
                 bookDiv.className = 'book-item';
                 
+                // 클릭 이벤트 추가 - 도서 상세 페이지로 이동
+                bookDiv.style.cursor = 'pointer';
+                bookDiv.addEventListener('click', () => {
+                    window.location.href = `/books/${encodeURIComponent(book.isbn)}`;
+                });
+                
                 const imageUrl = book.imageUrl || 'https://via.placeholder.com/80x120/f0f0f0/999999?text=NO+IMAGE';
                 const authors = Array.isArray(book.authors) ? book.authors.join(', ') : (book.author || '저자 미상');
                 

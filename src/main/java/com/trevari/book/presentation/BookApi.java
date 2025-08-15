@@ -2,6 +2,7 @@ package com.trevari.book.presentation;
 
 import com.trevari.book.dto.response.BookResponse;
 import com.trevari.book.dto.response.BookSearchResponse;
+import com.trevari.book.dto.response.DetailedBookResponse;
 import com.trevari.global.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,12 +17,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Book API", description = "도서 조회 및 검색 API")
 public interface BookApi {
     
-    @Operation(summary = "도서 상세 조회", description = "ISBN으로 특정 도서의 상세 정보를 조회합니다.")
+    @Operation(summary = "도서 상세 조회", description = "ISBN으로 특정 도서의 완전한 상세 정보를 조회합니다. 모든 도메인 필드를 포함합니다.")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "200",
-            description = "도서 조회 성공",
-            content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            description = "도서 상세 정보 조회 성공",
+            content = @Content(schema = @Schema(implementation = DetailedBookResponse.class))
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "404",
@@ -34,7 +35,7 @@ public interface BookApi {
             content = @Content(schema = @Schema(implementation = ApiResponse.class))
         )
     })
-    ResponseEntity<ApiResponse<BookResponse>> getBookDetail(
+    ResponseEntity<ApiResponse<DetailedBookResponse>> getBookDetail(
         @Parameter(description = "도서 ISBN", required = true, example = "9781617297397")
         @PathVariable String isbn);
     

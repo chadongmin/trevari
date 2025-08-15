@@ -3,6 +3,7 @@ package com.trevari.book.application;
 import com.trevari.book.domain.Book;
 import com.trevari.book.dto.response.BookSearchResponse;
 import com.trevari.book.dto.response.CacheableBookSearchResult;
+import com.trevari.book.dto.response.DetailedBookResponse;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
 import lombok.RequiredArgsConstructor;
@@ -24,10 +25,10 @@ public class BookService {
     private final BookCacheService bookCacheService;
     
     /**
-     * ISBN으로 도서 단건 조회
+     * ISBN으로 도서 단건 조회 (엔티티 반환)
      *
      * @param isbn 도서 ISBN
-     * @return 조회된 도서 정보
+     * @return 조회된 도서 엔티티
      * @throws BookException 도서를 찾을 수 없는 경우
      */
     public Book getBookByIsbn(String isbn) {
@@ -40,6 +41,23 @@ public class BookService {
         }
         
         return book;
+    }
+    
+    /**
+     * ISBN으로 도서 상세 정보 조회 (DetailedBookResponse 반환)
+     *
+     * @param isbn 도서 ISBN
+     * @return 도서 상세 정보 DTO
+     * @throws BookException 도서를 찾을 수 없는 경우
+     */
+    public DetailedBookResponse getDetailedBookByIsbn(String isbn) {
+        log.info("Getting detailed book information for ISBN: {}", isbn);
+        
+        Book book = getBookByIsbn(isbn);
+        DetailedBookResponse response = DetailedBookResponse.from(book);
+        
+        log.debug("Successfully converted book to detailed response for ISBN: {}", isbn);
+        return response;
     }
     
     /**
