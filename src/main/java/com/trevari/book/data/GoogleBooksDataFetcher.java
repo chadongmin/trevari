@@ -2,20 +2,19 @@ package com.trevari.book.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 /**
- * Google Books API에서 데이터를 가져와서 SQL INSERT문을 생성하는 유틸리티
- * 개발 시에만 사용하며, 운영에서는 사용하지 않음
+ * Google Books API에서 데이터를 가져와서 SQL INSERT문을 생성하는 유틸리티 개발 시에만 사용하며, 운영에서는 사용하지 않음
  */
 @Slf4j
 @Component
@@ -25,8 +24,7 @@ public class GoogleBooksDataFetcher {
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     /**
-     * 기존 데이터를 복제하여 대량의 SQL INSERT문을 빠르게 생성
-     * 이 메서드는 개발 시에 한번만 실행해서 data.sql 파일을 생성할 용도
+     * 기존 데이터를 복제하여 대량의 SQL INSERT문을 빠르게 생성 이 메서드는 개발 시에 한번만 실행해서 data.sql 파일을 생성할 용도
      */
     public void generateSqlInsertStatements() {
         List<String> keywords = List.of(
@@ -81,7 +79,9 @@ public class GoogleBooksDataFetcher {
     private BookData parseBookFromJson(JsonNode item) {
         try {
             JsonNode volumeInfo = item.get("volumeInfo");
-            if (volumeInfo == null) return null;
+            if (volumeInfo == null) {
+                return null;
+            }
             
             // ISBN 추출
             String isbn = extractIsbn(volumeInfo.get("industryIdentifiers"));
@@ -90,10 +90,10 @@ public class GoogleBooksDataFetcher {
                 isbn = item.get("id").asText();
             }
             
-            String title = volumeInfo.has("title") ? 
+            String title = volumeInfo.has("title") ?
                 volumeInfo.get("title").asText() : "Unknown Title";
             
-            String subtitle = volumeInfo.has("subtitle") ? 
+            String subtitle = volumeInfo.has("subtitle") ?
                 volumeInfo.get("subtitle").asText() : null;
             
             List<String> authors = new ArrayList<>();
@@ -103,7 +103,7 @@ public class GoogleBooksDataFetcher {
                 }
             }
             
-            String publisher = volumeInfo.has("publisher") ? 
+            String publisher = volumeInfo.has("publisher") ?
                 volumeInfo.get("publisher").asText() : "Unknown Publisher";
             
             LocalDate publishedDate = parsePublishedDate(
@@ -113,7 +113,29 @@ public class GoogleBooksDataFetcher {
             // 이미지 URL 추출
             String imageUrl = extractImageUrl(volumeInfo.get("imageLinks"));
             
-            return new BookData(isbn, title, subtitle, authors, publisher, publishedDate, imageUrl);
+            String description = volumeInfo.has("description") ? volumeInfo.get("description").asText() : null;
+            Integer pageCount = volumeInfo.has("pageCount") ? volumeInfo.get("pageCount").asInt() : null;
+            String format = volumeInfo.has("printType") ? volumeInfo.get("printType").asText() : null;
+            
+            List<String> categories = new ArrayList<>();
+            if (volumeInfo.has("categories")) {
+                for (JsonNode categoryNode : volumeInfo.get("categories")) {
+                    // "Computers / Programming" 같은 경우 "Computers"만 저장
+                    categories.add(categoryNode.asText().split(" / ")[0]);
+                }
+            }
+            
+            JsonNode saleInfo = item.get("saleInfo");
+            Integer amount = null;
+            String currency = null;
+            if (saleInfo != null && saleInfo.has("listPrice")) {
+                JsonNode listPrice = saleInfo.get("listPrice");
+                // amount는 스키마에서 INT이므로 Double -> Integer로 변환
+                amount = listPrice.has("amount") ? (int)Math.round(listPrice.get("amount").asDouble()) : null;
+                currency = listPrice.has("currencyCode") ? listPrice.get("currencyCode").asText() : null;
+            }
+            
+            return new BookData(isbn, title, subtitle, authors, publisher, publishedDate, imageUrl, description, pageCount, format, categories, amount, currency);
             
         } catch (Exception e) {
             log.error("Error parsing book data", e);
@@ -122,7 +144,9 @@ public class GoogleBooksDataFetcher {
     }
     
     private String extractIsbn(JsonNode identifiers) {
-        if (identifiers == null) return null;
+        if (identifiers == null) {
+            return null;
+        }
         
         for (JsonNode identifier : identifiers) {
             String type = identifier.get("type").asText();
@@ -134,7 +158,9 @@ public class GoogleBooksDataFetcher {
     }
     
     private String extractImageUrl(JsonNode imageLinks) {
-        if (imageLinks == null) return null;
+        if (imageLinks == null) {
+            return null;
+        }
         
         // 선호도 순서: thumbnail > smallThumbnail > small > medium > large
         if (imageLinks.has("thumbnail")) {
@@ -171,45 +197,103 @@ public class GoogleBooksDataFetcher {
         }
     }
     
+    // GoogleBooksDataFetcher.java 파일의 generateInsertStatementsToFile 메서드를 아래 코드로 교체하세요.
+    
     private void generateInsertStatementsToFile(List<BookData> books) {
         StringBuilder sql = new StringBuilder();
-        sql.append("-- Generated book data with image URLs\n");
+        sql.append("-- Generated book data, compatible with 01_schema.sql\n");
         sql.append("-- DO NOT run this in production - use pre-generated data.sql instead\n\n");
         
-        // Book 테이블 INSERT문
-        sql.append("-- Book data with realistic book cover images\n");
+        // Collect unique authors and categories
+        Set<String> allAuthors = new HashSet<>();
+        Set<String> allCategories = new HashSet<>();
         for (BookData book : books) {
-            sql.append(String.format(
-                "INSERT INTO book (isbn, title, subtitle, publisher, published_date, image_url) VALUES ('%s', '%s', %s, '%s', '%s', %s);\n",
-                escapeSql(book.isbn()),
-                escapeSql(book.title()),
-                book.subtitle() != null ? "'" + escapeSql(book.subtitle()) + "'" : "NULL",
-                escapeSql(book.publisher()),
-                book.publishedDate(),
-                book.imageUrl() != null ? "'" + escapeSql(book.imageUrl()) + "'" : "NULL"
-            ));
-        }
-        
-        sql.append("\n-- Book authors\n");
-        for (BookData book : books) {
-            for (String author : book.authors()) {
-                sql.append(String.format(
-                    "INSERT INTO book_authors (book_isbn, authors) VALUES ('%s', '%s');\n",
-                    escapeSql(book.isbn()),
-                    escapeSql(author)
-                ));
+            if (book.authors() != null) {
+                allAuthors.addAll(book.authors());
+            }
+            if (book.categories() != null) {
+                allCategories.addAll(book.categories());
             }
         }
         
-        // Search keywords 데이터 추가
-        sql.append("\n-- Search keywords data\n");
-        String[] keywords = {"Java", "Spring", "Python", "JavaScript", "React", "Database", "Algorithm", 
-                           "Clean Code", "Design Pattern", "Architecture", "Microservices", "Kubernetes", 
-                           "MySQL", "MongoDB", "Programming"};
-        int count = 150;
-        for (String keyword : keywords) {
+        // Author table INSERTs
+        sql.append("-- Authors\n");
+        allAuthors.stream()
+            .filter(author -> author != null && !author.isBlank() && author.length() <= 255)
+            .forEach(author -> sql.append(String.format("INSERT IGNORE INTO author (name) VALUES ('%s');\n", escapeSql(author))));
+        sql.append("\n");
+        
+        // Category table INSERTs
+        sql.append("-- Categories\n");
+        allCategories.stream()
+            .filter(cat -> cat != null && !cat.isBlank() && cat.length() <= 255)
+            .forEach(category -> sql.append(String.format("INSERT IGNORE INTO category (name) VALUES ('%s');\n", escapeSql(category))));
+        sql.append("\n");
+        
+        // Book table INSERTs
+        sql.append("-- Books\n");
+        for (BookData book : books) {
             sql.append(String.format(
-                "INSERT INTO search_keywords (keyword, search_count) VALUES ('%s', %d);\n",
+                "INSERT IGNORE INTO book (isbn, title, subtitle, description, page_count, format, amount, currency, publisher, published_date, image_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);\n",
+                toSqlString(book.isbn()),
+                toSqlString(book.title()),
+                toSqlString(book.subtitle()),
+                toSqlString(book.description()),
+                toSqlValue(book.pageCount()),
+                toSqlString(book.format()),
+                toSqlValue(book.amount()),
+                toSqlString(book.currency()),
+                toSqlString(book.publisher()),
+                book.publishedDate() != null ? "'" + book.publishedDate().toString() + "'" : "NULL", // 날짜는 직접 처리
+                toSqlString(book.imageUrl())
+            ));
+        }
+        sql.append("\n");
+        
+        // ... 나머지 book_author, book_category, search_keywords 생성 로직은 동일 ...
+        // (이하 코드는 기존과 동일하게 유지)
+        
+        // Book-Author join table INSERTs
+        sql.append("-- Book-Author relationships\n");
+        for (BookData book : books) {
+            if (book.authors() == null) {
+                continue;
+            }
+            book.authors().stream()
+                .filter(author -> author != null && !author.isBlank() && author.length() <= 255)
+                .forEach(author -> sql.append(String.format(
+                    "INSERT IGNORE INTO book_author (book_isbn, author_id, role) SELECT '%s', id, '저자' FROM author WHERE name = '%s';\n",
+                    escapeSql(book.isbn()),
+                    escapeSql(author)
+                )));
+        }
+        sql.append("\n");
+        
+        // Book-Category join table INSERTs
+        sql.append("-- Book-Category relationships\n");
+        for (BookData book : books) {
+            if (book.categories() == null) {
+                continue;
+            }
+            book.categories().stream()
+                .filter(cat -> cat != null && !cat.isBlank() && cat.length() <= 255)
+                .forEach(category -> sql.append(String.format(
+                    "INSERT IGNORE INTO book_category (book_isbn, category_id) SELECT '%s', id FROM category WHERE name = '%s';\n",
+                    escapeSql(book.isbn()),
+                    escapeSql(category)
+                )));
+        }
+        sql.append("\n");
+        
+        // Search keywords data
+        sql.append("-- Search keywords data\n");
+        String[] keywordsArray = {"Java", "Spring", "Python", "JavaScript", "React", "Database", "Algorithm",
+            "Clean Code", "Design Pattern", "Architecture", "Microservices", "Kubernetes",
+            "MySQL", "MongoDB", "Programming"};
+        int count = 150;
+        for (String keyword : keywordsArray) {
+            sql.append(String.format(
+                "INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('%s', %d);\n",
                 escapeSql(keyword), count
             ));
             count -= 10;
@@ -224,88 +308,53 @@ public class GoogleBooksDataFetcher {
             log.info("Successfully generated {} books and saved to {}", books.size(), filePath);
         } catch (IOException e) {
             log.error("Failed to write SQL file", e);
-            // 콘솔에도 출력
             log.info("Generated SQL INSERT statements:\n{}", sql.toString());
         }
     }
     
-    private List<BookData> createSampleBooks() {
-        return Arrays.asList(
-            new BookData("9781617297397", "Java in Action", "Lambdas, streams, functional and reactive programming", 
-                       Arrays.asList("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft"), "Manning Publications", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=0pkyCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781449370831", "Java Pocket Guide", "Instant Access to Java Fundamentals", 
-                       Arrays.asList("Robert Liguori", "Patricia Liguori"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=1AdnCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781492056300", "Head First Java", "A Brain-Friendly Guide", 
-                       Arrays.asList("Kathy Sierra", "Bert Bates"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=4P2uDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781617294945", "Spring in Action", "Fifth Edition", 
-                       Arrays.asList("Craig Walls"), "Manning Publications", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=p1rMDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781617293290", "Spring Boot in Action", null, 
-                       Arrays.asList("Craig Walls"), "Manning Publications", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=tOiPCwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781491950401", "Learning Python", "Powerful Object-Oriented Programming", 
-                       Arrays.asList("Mark Lutz"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=ftA0DwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781449357016", "Fluent Python", "Clear, Concise, and Effective Programming", 
-                       Arrays.asList("Luciano Ramalho"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=bIxWCgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781593279288", "Automate the Boring Stuff with Python", "Practical Programming for Total Beginners", 
-                       Arrays.asList("Al Sweigart"), "No Starch Press", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=_StSCgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781449331818", "Learning JavaScript Design Patterns", "A JavaScript and jQuery Developer's Guide", 
-                       Arrays.asList("Addy Osmani"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=ka2VUBqHiWkC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781492037255", "React: Up & Running", "Building Web Applications", 
-                       Arrays.asList("Stoyan Stefanov"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=LC8gDgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781491954324", "Learning React", "Functional Web Development with React and Redux", 
-                       Arrays.asList("Alex Banks", "Eve Porcello"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=IOmLDAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781449373320", "Designing Data-Intensive Applications", "The Big Ideas Behind Reliable, Scalable, and Maintainable Systems", 
-                       Arrays.asList("Martin Kleppmann"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=p1hSDgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9780134685991", "Clean Code", "A Handbook of Agile Software Craftsmanship", 
-                       Arrays.asList("Robert C. Martin"), "Prentice Hall", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=hjEFCAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9780201633610", "Design Patterns", "Elements of Reusable Object-Oriented Software", 
-                       Arrays.asList("Erich Gamma", "Richard Helm", "Ralph Johnson", "John Vlissides"), "Addison-Wesley Professional", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=6oHuKQe3TjQC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781617290541", "Microservices Patterns", "With examples in Java", 
-                       Arrays.asList("Chris Richardson"), "Manning Publications", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=WPjqDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781492032640", "Building Microservices", "Designing Fine-Grained Systems", 
-                       Arrays.asList("Sam Newman"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=jjl4BgAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781492046523", "Kubernetes: Up and Running", "Dive into the Future of Infrastructure", 
-                       Arrays.asList("Kelsey Hightower", "Brendan Burns", "Joe Beda"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=JdXvDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9781449367640", "MongoDB: The Definitive Guide", "Powerful and Scalable Data Storage", 
-                       Arrays.asList("Kristina Chodorow"), "O'Reilly Media", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=f0MUAAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"),
-            new BookData("9780262033848", "Introduction to Algorithms", "Third Edition", 
-                       Arrays.asList("Thomas H. Cormen", "Charles E. Leiserson", "Ronald L. Rivest", "Clifford Stein"), "MIT Press", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=VK14QgAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"),
-            new BookData("9780321356680", "Effective Java", "Second Edition", 
-                       Arrays.asList("Joshua Bloch"), "Addison-Wesley Professional", 
-                       LocalDate.of(2020, 1, 1), "https://books.google.com/books/content?id=ka2VUBqHiWkC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api")
-        );
+    // 아래 두 개의 헬퍼 메서드를 추가해주세요.
+    private String toSqlString(String value) {
+        if (value == null) {
+            return "NULL";
+        }
+        return "'" + escapeSql(value) + "'";
     }
     
-    private String escapeSql(String value) {
-        if (value == null) return "";
-        return value.replace("'", "''").replace("\n", " ").replace("\r", "");
+    private String toSqlValue(Object value) {
+        if (value == null) {
+            return "NULL";
+        }
+        return value.toString();
     }
+    
+    // escapeSql 메서드는 기존의 것을 그대로 사용합니다.
+    private String escapeSql(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim()
+            .replace("\\", "\\\\") // 역슬래시 먼저 처리
+            .replace("'", "''")
+            .replace("\n", " ")
+            .replace("\r", "");
+    }
+    
     
     private record BookData(
         String isbn,
-        String title, 
+        String title,
         String subtitle,
         List<String> authors,
         String publisher,
         LocalDate publishedDate,
-        String imageUrl
-    ) {}
+        String imageUrl,
+        String description,
+        Integer pageCount,
+        String format,
+        List<String> categories,
+        Integer amount,
+        String currency
+    ) {
+    
+    }
 }
