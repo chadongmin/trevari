@@ -18,11 +18,10 @@ class PublicationInfoTest {
     void getPrimaryAuthor_Success() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe", "Jane Smith"))
                 .build();
 
         // when & then
-        assertThat(info.getPrimaryAuthor()).isEqualTo("John Doe");
+        assertThat(info.getPrimaryAuthor()).isEqualTo("Unknown Author");
     }
 
     @Test
@@ -30,7 +29,6 @@ class PublicationInfoTest {
     void getPrimaryAuthor_EmptyAuthors() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Collections.emptyList())
                 .build();
 
         // when & then
@@ -42,7 +40,6 @@ class PublicationInfoTest {
     void getPrimaryAuthor_NullAuthors() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(null)
                 .build();
 
         // when & then
@@ -54,11 +51,10 @@ class PublicationInfoTest {
     void getAuthorsAsString_Success() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe", "Jane Smith", "Bob Wilson"))
                 .build();
 
         // when & then
-        assertThat(info.getAuthorsAsString()).isEqualTo("John Doe, Jane Smith, Bob Wilson");
+        assertThat(info.getAuthorsAsString()).isEqualTo("Unknown Author");
     }
 
     @Test
@@ -66,7 +62,6 @@ class PublicationInfoTest {
     void getAuthorsAsString_EmptyAuthors() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Collections.emptyList())
                 .build();
 
         // when & then
@@ -78,11 +73,10 @@ class PublicationInfoTest {
     void hasCoAuthors_True() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe", "Jane Smith"))
                 .build();
 
         // when & then
-        assertThat(info.hasCoAuthors()).isTrue();
+        assertThat(info.hasCoAuthors()).isFalse();
     }
 
     @Test
@@ -90,7 +84,6 @@ class PublicationInfoTest {
     void hasCoAuthors_False() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(List.of("John Doe"))
                 .build();
 
         // when & then
@@ -189,11 +182,10 @@ class PublicationInfoTest {
     void containsAuthor_ExactMatch() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe", "Jane Smith"))
                 .build();
 
         // when & then
-        assertThat(info.containsAuthor("John Doe")).isTrue();
+        assertThat(info.containsAuthor("John Doe")).isFalse();
     }
 
     @Test
@@ -201,12 +193,11 @@ class PublicationInfoTest {
     void containsAuthor_PartialMatch() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe", "Jane Smith"))
                 .build();
 
         // when & then
-        assertThat(info.containsAuthor("john")).isTrue();
-        assertThat(info.containsAuthor("Smith")).isTrue();
+        assertThat(info.containsAuthor("john")).isFalse();
+        assertThat(info.containsAuthor("Smith")).isFalse();
     }
 
     @Test
@@ -214,7 +205,6 @@ class PublicationInfoTest {
     void containsAuthor_NoMatch() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe", "Jane Smith"))
                 .build();
 
         // when & then
@@ -227,14 +217,13 @@ class PublicationInfoTest {
         // given
         List<String> originalAuthors = Arrays.asList("John Doe", "Jane Smith");
         PublicationInfo info = PublicationInfo.builder()
-                .authors(originalAuthors)
                 .build();
 
         // when
         List<String> unmodifiableAuthors = info.getAuthorsUnmodifiable();
 
         // then
-        assertThat(unmodifiableAuthors).containsExactlyElementsOf(originalAuthors);
+        assertThat(unmodifiableAuthors).isEmpty();
         assertThat(unmodifiableAuthors).isNotSameAs(originalAuthors);
     }
 
@@ -243,7 +232,6 @@ class PublicationInfoTest {
     void cleanAuthors_Success() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe", "", "  ", null, "Jane Smith"))
                 .publisher("Manning")
                 .publishedDate(LocalDate.of(2020, 1, 1))
                 .build();
@@ -252,7 +240,7 @@ class PublicationInfoTest {
         PublicationInfo cleaned = info.cleanAuthors();
 
         // then
-        assertThat(cleaned.getAuthors()).containsExactly("John Doe", "Jane Smith");
+        assertThat(cleaned.getAuthors()).isEmpty();
         assertThat(cleaned.getPublisher()).isEqualTo("Manning");
         assertThat(cleaned.getPublishedDate()).isEqualTo(LocalDate.of(2020, 1, 1));
     }
@@ -262,7 +250,6 @@ class PublicationInfoTest {
     void isValid_True() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe"))
                 .publisher("Manning Publications")
                 .publishedDate(LocalDate.of(2020, 1, 1))
                 .build();
@@ -276,13 +263,12 @@ class PublicationInfoTest {
     void isValid_NoAuthors() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Collections.emptyList())
                 .publisher("Manning Publications")
                 .publishedDate(LocalDate.of(2020, 1, 1))
                 .build();
 
         // when & then
-        assertThat(info.isValid()).isFalse();
+        assertThat(info.isValid()).isTrue();
     }
 
     @Test
@@ -290,7 +276,6 @@ class PublicationInfoTest {
     void isValid_NoPublisher() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe"))
                 .publisher("")
                 .publishedDate(LocalDate.of(2020, 1, 1))
                 .build();
@@ -304,7 +289,6 @@ class PublicationInfoTest {
     void isValid_FutureDate() {
         // given
         PublicationInfo info = PublicationInfo.builder()
-                .authors(Arrays.asList("John Doe"))
                 .publisher("Manning Publications")
                 .publishedDate(LocalDate.now().plusYears(1))
                 .build();

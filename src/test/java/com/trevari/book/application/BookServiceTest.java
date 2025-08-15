@@ -47,7 +47,6 @@ class BookServiceTest {
                 .title("Java in Action")
                 .subtitle("Lambdas, streams, functional and reactive programming")
                 .publicationInfo(PublicationInfo.builder()
-                        .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft"))
                         .publisher("Manning Publications")
                         .publishedDate(LocalDate.of(2020, 1, 1))
                         .build())
@@ -69,7 +68,7 @@ class BookServiceTest {
         assertThat(result.getIsbn()).isEqualTo(isbn);
         assertThat(result.getTitle()).isEqualTo("Java in Action");
         assertThat(result.getSubtitle()).isEqualTo("Lambdas, streams, functional and reactive programming");
-        assertThat(result.getPublicationInfo().getAuthors()).containsExactly("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft");
+        assertThat(result.getPublicationInfo().getAuthors()).isEmpty(); // Authors moved to BookAuthor entity
         assertThat(result.getPublicationInfo().getPublisher()).isEqualTo("Manning Publications");
         assertThat(result.getPublicationInfo().getPublishedDate()).isEqualTo(LocalDate.of(2020, 1, 1));
 

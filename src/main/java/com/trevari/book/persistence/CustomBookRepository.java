@@ -23,4 +23,9 @@ public interface CustomBookRepository {
      * NOT 연산 키워드 검색 (첫 번째 키워드 포함, 두 번째 키워드 제외)
      */
     Page<Book> findByNotKeywords(String includeKeyword, String excludeKeyword, Pageable pageable);
+    
+    /**
+     * 카테고리명으로 도서 검색
+     */
+    Page<Book> findByCategoryName(String categoryName, Pageable pageable);
 }

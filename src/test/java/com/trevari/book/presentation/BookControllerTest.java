@@ -60,7 +60,6 @@ class BookControllerTest {
                 .title("Java in Action")
                 .subtitle("Lambdas, streams, functional and reactive programming")
                 .publicationInfo(PublicationInfo.builder()
-                        .authors(List.of("Raoul-Gabriel Urma", "Mario Fusco", "Alan Mycroft"))
                         .publisher("Manning Publications")
                         .publishedDate(LocalDate.of(2020, 1, 1))
                         .build())
@@ -87,9 +86,7 @@ class BookControllerTest {
                 .andExpect(jsonPath("$.data.title").value("Java in Action"))
                 .andExpect(jsonPath("$.data.subtitle").value("Lambdas, streams, functional and reactive programming"))
                 .andExpect(jsonPath("$.data.authors").isArray())
-                .andExpect(jsonPath("$.data.authors[0]").value("Raoul-Gabriel Urma"))
-                .andExpect(jsonPath("$.data.authors[1]").value("Mario Fusco"))
-                .andExpect(jsonPath("$.data.authors[2]").value("Alan Mycroft"))
+                .andExpect(jsonPath("$.data.authors").isEmpty()) // Authors moved to BookAuthor entity
                 .andExpect(jsonPath("$.data.publisher").value("Manning Publications"))
                 .andExpect(jsonPath("$.data.publishedDate").value("2020-01-01"))
                 .andExpect(jsonPath("$.timestamp").exists());

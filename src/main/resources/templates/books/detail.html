@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도서 상세 정보</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .book-detail {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .book-header {
+            display: flex;
+            padding: 30px;
+            gap: 30px;
+        }
+
+        .book-image {
+            flex-shrink: 0;
+            width: 200px;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .book-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .book-info {
+            flex: 1;
+        }
+
+        .book-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            line-height: 1.3;
+        }
+
+        .book-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .book-meta {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: start;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .meta-value {
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .meta-value.highlight {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .meta-value.success {
+            color: #27ae60;
+            font-weight: 500;
+        }
+
+        .meta-value.warning {
+            color: #f39c12;
+            font-weight: 500;
+        }
+
+        .meta-value.error {
+            color: #e74c3c;
+            font-weight: 500;
+        }
+
+        .authors-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .author-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .author-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .author-role {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .book-format {
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-badge.recent {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.old {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .categories-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .category-tag {
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+
+        .book-description {
+            padding: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .description-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .description-text {
+            color: #666;
+            line-height: 1.7;
+        }
+
+        .price-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .price-amount {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e74c3c;
+        }
+
+        .price-currency {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+
+        .error {
+            text-align: center;
+            padding: 60px;
+            color: #e74c3c;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .error h2 {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .book-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .book-image {
+                width: 150px;
+                height: 225px;
+                margin: 0 auto;
+            }
+
+            .book-title {
+                font-size: 1.5rem;
+            }
+
+            .book-meta {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+
+            .meta-label {
+                font-weight: 600;
+                color: #555;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📖 도서 상세 정보</h1>
+        </div>
+
+        <a href="/search" class="back-btn">← 검색 화면으로 돌아가기</a>
+
+        <div class="loading" id="loading">
+            <p>📚 도서 정보를 불러오고 있습니다...</p>
+        </div>
+
+        <div class="error" id="error" style="display: none;">
+            <h2>😕 도서 정보를 찾을 수 없습니다</h2>
+            <p>요청하신 도서를 찾을 수 없습니다. ISBN을 확인해주세요.</p>
+        </div>
+
+        <div class="book-detail" id="bookDetail" style="display: none;">
+            <!-- 도서 상세 정보가 여기에 로드됩니다 -->
+        </div>
+    </div>
+
+    <script>
+        class BookDetail {
+            constructor() {
+                this.isbn = this.getIsbnFromUrl();
+                this.initializeElements();
+                this.loadBookDetail();
+            }
+
+            initializeElements() {
+                this.loadingElement = document.getElementById('loading');
+                this.errorElement = document.getElementById('error');
+                this.bookDetailElement = document.getElementById('bookDetail');
+            }
+
+            getIsbnFromUrl() {
+                const pathParts = window.location.pathname.split('/');
+                return pathParts[pathParts.length - 1];
+            }
+
+            async loadBookDetail() {
+                if (!this.isbn) {
+                    this.showError();
+                    return;
+                }
+
+                try {
+                    this.showLoading();
+                    
+                    const response = await fetch(`/api/books/${encodeURIComponent(this.isbn)}`);
+                    
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('도서를 찾을 수 없습니다.');
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.displayBookDetail(data.data);
+                    } else {
+                        throw new Error(data.message || '도서 정보를 가져오는데 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Book detail load error:', error);
+                    this.showError(error.message);
+                }
+            }
+
+            displayBookDetail(book) {
+                console.log('Book data received:', book); // 디버깅용
+                console.log('pageCount:', book.pageCount, 'format:', book.format, 'price:', book.price);
+                
+                const imageUrl = book.imageUrl || 'https://via.placeholder.com/200x300/f0f0f0/999999?text=NO+IMAGE';
+                
+                this.bookDetailElement.innerHTML = `
+                    <div class="book-header">
+                        <div class="book-image">
+                            <img src="${imageUrl}" alt="${this.escapeHtml(book.title)}" 
+                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/200x300/f0f0f0/999999?text=📖';">
+                        </div>
+                        <div class="book-info">
+                            <h1 class="book-title">${this.escapeHtml(book.title)}</h1>
+                            ${book.subtitle ? `<div class="book-subtitle">${this.escapeHtml(book.subtitle)}</div>` : ''}
+                            
+                            <!-- 기본 정보 -->
+                            <div class="book-meta">
+                                <div class="meta-label">ISBN:</div>
+                                <div class="meta-value highlight">${this.escapeHtml(book.isbn)}</div>
+                            </div>
+                            
+                            ${book.format ? `
+                                <div class="book-meta">
+                                    <div class="meta-label">도서 형태:</div>
+                                    <div class="meta-value">
+                                        <span class="book-format">${this.formatBookFormat(book.format)}</span>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${book.pageCount && book.pageCount > 0 ? `
+                                <div class="book-meta">
+                                    <div class="meta-label">페이지 수:</div>
+                                    <div class="meta-value highlight">${book.pageCount.toLocaleString()}쪽</div>
+                                </div>
+                            ` : ''}
+                            
+                            ${book.price && book.price.amount ? `
+                                <div class="book-meta">
+                                    <div class="meta-label">가격:</div>
+                                    <div class="meta-value highlight">
+                                        ${book.price.amount.toLocaleString()} ${book.price.currency || 'KRW'}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- 저자 정보 섹션 -->
+                    ${this.renderAuthorsSection(book)}
+                    
+                    <!-- 출판 정보 섹션 -->
+                    ${this.renderPublicationSection(book)}
+                    
+                    <!-- 카테고리 정보 섹션 -->
+                    ${this.renderCategoriesSection(book)}
+                    
+                    <!-- 도서 설명 섹션 -->
+                    ${this.renderDescriptionSection(book)}
+                `;
+                
+                this.hideLoading();
+                this.bookDetailElement.style.display = 'block';
+            }
+
+            renderAuthorsSection(book) {
+                if (!book.bookAuthors || book.bookAuthors.length === 0) {
+                    // 하위 호환성을 위한 authorNames 체크
+                    if (book.authorNames && book.authorNames.length > 0) {
+                        return `
+                            <div class="info-section">
+                                <h3 class="section-title">✍️ 저자 정보</h3>
+                                <div class="authors-list">
+                                    ${book.authorNames.map(name => `
+                                        <div class="author-item">
+                                            <span class="author-name">${this.escapeHtml(name)}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    return '';
+                }
+                
+                return `
+                    <div class="info-section">
+                        <h3 class="section-title">✍️ 저자 정보</h3>
+                        <div class="authors-list">
+                            ${book.bookAuthors.map(author => `
+                                <div class="author-item">
+                                    <span class="author-name">${this.escapeHtml(author.authorName)}</span>
+                                    ${author.role ? `<span class="author-role">${this.escapeHtml(author.role)}</span>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderPublicationSection(book) {
+                return `
+                    <div class="info-section">
+                        <h3 class="section-title">📚 출판 정보</h3>
+                        
+                        <div class="book-meta">
+                            <div class="meta-label">출판사:</div>
+                            <div class="meta-value">${this.escapeHtml(book.publisher || '정보 없음')}</div>
+                        </div>
+                        
+                        ${book.publishedDate ? `
+                            <div class="book-meta">
+                                <div class="meta-label">출간일:</div>
+                                <div class="meta-value">${book.publishedDate}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            renderCategoriesSection(book) {
+                if (!book.categories || book.categories.length === 0) {
+                    return '';
+                }
+                
+                return `
+                    <div class="info-section">
+                        <h3 class="section-title">📂 카테고리</h3>
+                        <div class="categories-list">
+                            ${book.categories.map(category => 
+                                `<span class="category-tag">${this.escapeHtml(category.name)}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderDescriptionSection(book) {
+                if (!book.description || book.description === '곧 제공될 상세 설명') {
+                    return '';
+                }
+                
+                return `
+                    <div class="book-description">
+                        <h2 class="description-title">📖 도서 소개</h2>
+                        <div class="description-text">${this.escapeHtml(book.description)}</div>
+                    </div>
+                `;
+            }
+
+            formatBookFormat(format) {
+                const formatMap = {
+                    'PAPERBACK': '페이퍼백',
+                    'HARDCOVER': '하드커버',
+                    'EBOOK': '전자책',
+                    'AUDIOBOOK': '오디오북',
+                    'BOOK': '도서',
+                    'MAGAZINE': '잡지'
+                };
+                return formatMap[format] || format;
+            }
+
+            showLoading() {
+                this.loadingElement.style.display = 'block';
+                this.errorElement.style.display = 'none';
+                this.bookDetailElement.style.display = 'none';
+            }
+
+            hideLoading() {
+                this.loadingElement.style.display = 'none';
+            }
+
+            showError(message = '도서 정보를 찾을 수 없습니다.') {
+                this.errorElement.querySelector('p').textContent = message;
+                this.errorElement.style.display = 'block';
+                this.loadingElement.style.display = 'none';
+                this.bookDetailElement.style.display = 'none';
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            new BookDetail();
+        });
+    </script>
+</body>
+</html>

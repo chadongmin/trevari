@@ -1,5 +1,6 @@
 package com.trevari.book.cache;
 
+import com.trevari.book.IntegrationTestSupport;
 import com.trevari.book.application.BookService;
 import com.trevari.book.application.SearchKeywordService;
 import com.trevari.book.domain.Book;
@@ -12,10 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -23,11 +22,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
 @Transactional
 @DisplayName("캐시 통합 테스트")
-class CacheIntegrationTest {
+class CacheIntegrationTest extends IntegrationTestSupport {
 
     @Autowired
     private BookService bookService;
@@ -57,7 +54,6 @@ class CacheIntegrationTest {
                 .title("Test Book")
                 .subtitle("A test book for caching")
                 .publicationInfo(PublicationInfo.builder()
-                        .authors(List.of("Test Author"))
                         .publisher("Test Publisher")
                         .publishedDate(LocalDate.of(2023, 1, 1))
                         .build())
@@ -142,7 +138,7 @@ class CacheIntegrationTest {
     void testCacheEvictionOnKeywordRecord() {
         // 인기 키워드 캐시 생성
         searchKeywordService.getTopSearchKeywords();
-        
+
         // 캐시 동작은 성능상 이점으로 검증 (구체적인 캐시 확인 대신)
 
         // 새로운 검색 키워드 기록 - 캐시 무효화 발생

@@ -31,7 +31,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         // 데이터 조회
         List<Book> books = queryFactory
                 .selectFrom(book)
-                .leftJoin(book.publicationInfo.authors).fetchJoin()
+                .leftJoin(book.bookAuthors).fetchJoin()
                 .where(searchCondition)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -42,7 +42,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         Long totalCount = queryFactory
                 .select(book.countDistinct())
                 .from(book)
-                .leftJoin(book.publicationInfo.authors)
+                .leftJoin(book.bookAuthors)
                 .where(searchCondition)
                 .fetchOne();
         
@@ -69,7 +69,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         // 데이터 조회
         List<Book> books = queryFactory
                 .selectFrom(book)
-                .leftJoin(book.publicationInfo.authors).fetchJoin()
+                .leftJoin(book.bookAuthors).fetchJoin()
                 .where(orCondition)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -80,7 +80,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         Long totalCount = queryFactory
                 .select(book.countDistinct())
                 .from(book)
-                .leftJoin(book.publicationInfo.authors)
+                .leftJoin(book.bookAuthors)
                 .where(orCondition)
                 .fetchOne();
         
@@ -105,7 +105,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         // 데이터 조회
         List<Book> books = queryFactory
                 .selectFrom(book)
-                .leftJoin(book.publicationInfo.authors).fetchJoin()
+                .leftJoin(book.bookAuthors).fetchJoin()
                 .where(notCondition)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -116,7 +116,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         Long totalCount = queryFactory
                 .select(book.countDistinct())
                 .from(book)
-                .leftJoin(book.publicationInfo.authors)
+                .leftJoin(book.bookAuthors)
                 .where(notCondition)
                 .fetchOne();
         
@@ -138,13 +138,51 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         BooleanExpression titleCondition = book.title.lower().contains(lowerKeyword);
         BooleanExpression subtitleCondition = book.subtitle.coalesce("").lower().contains(lowerKeyword);
         
-        // 저자명 검색: JPQL EXISTS를 사용하여 authors 컬렉션 검색
+        // 저자명 검색: BookAuthor와 Author 엔티티를 통한 검색
         BooleanExpression authorCondition = Expressions.booleanTemplate(
-            "exists (select 1 from Book b join b.publicationInfo.authors a where b = {0} and lower(a) like {1})",
+            "exists (select 1 from BookAuthor ba join ba.author a where ba.book = {0} and lower(a.name) like {1})",
             book,
             "%" + lowerKeyword + "%"
         );
         
         return titleCondition.or(subtitleCondition).or(authorCondition);
+    }
+
+    @Override
+    public Page<Book> findByCategoryName(String categoryName, Pageable pageable) {
+        // 카테고리 검색 조건 생성
+        BooleanExpression categoryCondition = createCategorySearchCondition(categoryName);
+        
+        // 데이터 조회
+        List<Book> books = queryFactory
+                .selectFrom(book)
+                .join(book.categories)
+                .where(categoryCondition)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .distinct()
+                .fetch();
+        
+        // 총 개수 조회
+        Long totalCount = queryFactory
+                .select(book.countDistinct())
+                .from(book)
+                .join(book.categories)
+                .where(categoryCondition)
+                .fetchOne();
+        
+        return new PageImpl<>(books, pageable, totalCount != null ? totalCount : 0L);
+    }
+    
+    /**
+     * 카테고리 검색 조건을 생성하는 헬퍼 메서드
+     */
+    private BooleanExpression createCategorySearchCondition(String categoryName) {
+        if (categoryName == null || categoryName.trim().isEmpty()) {
+            return null;
+        }
+        
+        // QueryDSL을 사용한 카테고리 검색 - any() 메서드 사용
+        return book.categories.any().name.containsIgnoreCase(categoryName);
     }
 }

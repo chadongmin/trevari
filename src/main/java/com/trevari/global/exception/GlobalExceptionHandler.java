@@ -7,6 +7,7 @@ import com.trevari.global.ratelimit.RateLimitExceededException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
@@ -18,7 +19,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.trevari.book")
+@Order(Integer.MAX_VALUE) // 가장 낮은 우선순위로 설정
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BookException.class)
@@ -82,7 +84,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<List<ErrorDetail>>> handleGeneralException(Exception e, HttpServletRequest request) {
-        log.error("Unexpected error at {}: ", request.getRequestURI(), e);
+        System.out.println("=== EXCEPTION HANDLER CALLED ===");
+        System.out.println("Request URI: " + request.getRequestURI());
+        System.out.println("Exception: " + e.getClass().getSimpleName());
+        System.out.println("Message: " + e.getMessage());
+        e.printStackTrace();
+        
+        log.warn("Unexpected error at {}: ", request.getRequestURI(), e);
 
         ErrorDetail errorDetail = ErrorDetail.of("INTERNAL_ERROR", "An unexpected error occurred", null);
         List<ErrorDetail> errors = List.of(errorDetail);
