@@ -139,11 +139,7 @@ public class CustomBookRepositoryImpl implements CustomBookRepository {
         BooleanExpression subtitleCondition = book.subtitle.coalesce("").lower().contains(lowerKeyword);
         
         // 저자명 검색: BookAuthor와 Author 엔티티를 통한 검색
-        BooleanExpression authorCondition = Expressions.booleanTemplate(
-            "exists (select 1 from BookAuthor ba join ba.author a where ba.book = {0} and lower(a.name) like {1})",
-            book,
-            "%" + lowerKeyword + "%"
-        );
+        BooleanExpression authorCondition = book.bookAuthors.any().author.name.lower().contains(lowerKeyword);
         
         return titleCondition.or(subtitleCondition).or(authorCondition);
     }

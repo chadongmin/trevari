@@ -3,9 +3,12 @@ package com.trevari.book.presentation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.trevari.book.domain.Author;
 import com.trevari.book.domain.Book;
+import com.trevari.book.domain.BookAuthor;
 import com.trevari.book.domain.PublicationInfo;
 import com.trevari.book.persistence.BookJpaRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +41,9 @@ class BookControllerIntegrationTest {
     private BookJpaRepository bookRepository;
 
     @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private Book testBook1;
@@ -48,6 +54,20 @@ class BookControllerIntegrationTest {
     void setUp() {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // 저자 생성
+        Author raoul = Author.builder().name("Raoul-Gabriel Urma").build();
+        Author mario = Author.builder().name("Mario Fusco").build();
+        Author alan = Author.builder().name("Alan Mycroft").build();
+        Author joshua = Author.builder().name("Joshua Bloch").build();
+        Author martin = Author.builder().name("Martin Kleppmann").build();
+
+        entityManager.persist(raoul);
+        entityManager.persist(mario);
+        entityManager.persist(alan);
+        entityManager.persist(joshua);
+        entityManager.persist(martin);
+        entityManager.flush();
 
         // 테스트 데이터 생성
         testBook1 = Book.builder()
@@ -80,6 +100,20 @@ class BookControllerIntegrationTest {
                 .build();
 
         bookRepository.saveAll(List.of(testBook1, testBook2, testBook3));
+
+        // BookAuthor 관계 생성
+        BookAuthor bookAuthor1_1 = BookAuthor.builder().book(testBook1).author(raoul).role("저자").build();
+        BookAuthor bookAuthor1_2 = BookAuthor.builder().book(testBook1).author(mario).role("저자").build();
+        BookAuthor bookAuthor1_3 = BookAuthor.builder().book(testBook1).author(alan).role("저자").build();
+        BookAuthor bookAuthor2 = BookAuthor.builder().book(testBook2).author(joshua).role("저자").build();
+        BookAuthor bookAuthor3 = BookAuthor.builder().book(testBook3).author(martin).role("저자").build();
+
+        entityManager.persist(bookAuthor1_1);
+        entityManager.persist(bookAuthor1_2);
+        entityManager.persist(bookAuthor1_3);
+        entityManager.persist(bookAuthor2);
+        entityManager.persist(bookAuthor3);
+        entityManager.flush();
     }
 
     @Test

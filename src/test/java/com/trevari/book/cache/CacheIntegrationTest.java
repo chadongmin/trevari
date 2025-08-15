@@ -1,6 +1,5 @@
 package com.trevari.book.cache;
 
-import com.trevari.book.IntegrationTestSupport;
 import com.trevari.book.application.BookService;
 import com.trevari.book.application.SearchKeywordService;
 import com.trevari.book.domain.Book;
@@ -13,8 +12,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -22,9 +24,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SpringBootTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @Transactional
+@ActiveProfiles("test")
 @DisplayName("캐시 통합 테스트")
-class CacheIntegrationTest extends IntegrationTestSupport {
+class CacheIntegrationTest {
 
     @Autowired
     private BookService bookService;

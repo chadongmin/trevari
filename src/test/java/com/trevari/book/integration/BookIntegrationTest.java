@@ -1,6 +1,5 @@
 package com.trevari.book.integration;
 
-import com.trevari.book.IntegrationTestSupport;
 import com.trevari.book.domain.Author;
 import com.trevari.book.domain.Book;
 import com.trevari.book.domain.BookAuthor;
@@ -12,25 +11,32 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@SpringBootTest
+@AutoConfigureMockMvc
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @Transactional
-@DisplayName("Book API 통합 테스트 - TestContainers")
-class BookIntegrationTest extends IntegrationTestSupport {
+@ActiveProfiles("test")
+@DisplayName("Book API 통합 테스트")
+class BookIntegrationTest {
 
-    @LocalServerPort
-    private int port;
+    @Autowired
+    private MockMvc mockMvc;
 
     @Autowired
     private BookJpaRepository bookRepository;
@@ -133,10 +139,10 @@ class BookIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.data.isbn").value(testBook.getIsbn()))
                 .andExpect(jsonPath("$.data.title").value(testBook.getTitle()))
                 .andExpect(jsonPath("$.data.subtitle").value(testBook.getSubtitle()))
-                .andExpect(jsonPath("$.data.authors").isArray())
-                .andExpect(jsonPath("$.data.authors[0]").value("Raoul-Gabriel Urma"))
-                .andExpect(jsonPath("$.data.authors[1]").value("Mario Fusco"))
-                .andExpect(jsonPath("$.data.authors[2]").value("Alan Mycroft"))
+                .andExpect(jsonPath("$.data.bookAuthors").isArray())
+                .andExpect(jsonPath("$.data.bookAuthors[0].authorName").value("Raoul-Gabriel Urma"))
+                .andExpect(jsonPath("$.data.bookAuthors[1].authorName").value("Mario Fusco"))
+                .andExpect(jsonPath("$.data.bookAuthors[2].authorName").value("Alan Mycroft"))
                 .andExpect(jsonPath("$.data.publisher").value("Manning Publications"))
                 .andExpect(jsonPath("$.data.publishedDate").value("2020-01-01"))
                 .andExpect(jsonPath("$.timestamp").exists());
