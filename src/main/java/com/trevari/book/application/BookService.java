@@ -96,4 +96,33 @@ public class BookService {
         
         return cachedResult.toResponse(executionTime);
     }
+
+    /**
+     * 카테고리별 도서 검색
+     *
+     * @param categoryName 카테고리명
+     * @param pageable 페이징 정보
+     * @return 검색 결과
+     */
+    public BookSearchResponse getBooksByCategory(String categoryName, Pageable pageable) {
+        log.info("Searching books by category: {}, page: {}, size: {}",
+            categoryName, pageable.getPageNumber(), pageable.getPageSize());
+        
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            // 카테고리별 검색 결과 조회 (캐시 활용)
+            CacheableBookSearchResult cachedResult = bookCacheService.getBooksByCategoryCached(categoryName, pageable);
+            
+            long executionTime = System.currentTimeMillis() - startTime;
+            log.info("Category search completed in {}ms, found {} books for category '{}'",
+                executionTime, cachedResult.getBooks().size(), categoryName);
+            
+            return cachedResult.toResponse(executionTime);
+            
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid category name: {}", categoryName, e);
+            throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
+        }
+    }
 }
