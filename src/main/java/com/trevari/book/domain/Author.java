@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Column;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,6 +19,7 @@ import java.util.Set;
  * 저자를 나타내는 엔티티 클래스
  */
 @Entity
+@Table(name = "author")
 @Getter
 @Builder
 @NoArgsConstructor

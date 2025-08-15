@@ -54,7 +54,7 @@ public record DetailedBookResponse(
     String imageUrl,
     
     @Schema(description = "하위 호환성을 위한 저자명 목록")
-    List<String> authorNames
+    List<String> authors
 ) {
     
     /**
@@ -73,14 +73,26 @@ public record DetailedBookResponse(
         
         // 저자 정보 처리
         List<BookAuthorResponse> bookAuthorResponses = null;
-        List<String> authorNames = null;
+        List<String> authors = null;
         
         if (book.getBookAuthors() != null && !book.getBookAuthors().isEmpty()) {
             bookAuthorResponses = book.getBookAuthors().stream()
+                .sorted((ba1, ba2) -> {
+                    if (ba1.getId() == null && ba2.getId() == null) return 0;
+                    if (ba1.getId() == null) return 1;
+                    if (ba2.getId() == null) return -1;
+                    return ba1.getId().compareTo(ba2.getId());
+                })
                 .map(BookAuthorResponse::from)
                 .collect(Collectors.toList());
             
-            authorNames = book.getBookAuthors().stream()
+            authors = book.getBookAuthors().stream()
+                .sorted((ba1, ba2) -> {
+                    if (ba1.getId() == null && ba2.getId() == null) return 0;
+                    if (ba1.getId() == null) return 1;
+                    if (ba2.getId() == null) return -1;
+                    return ba1.getId().compareTo(ba2.getId());
+                })
                 .map(bookAuthor -> bookAuthor.getAuthor() != null ? bookAuthor.getAuthor().getName() : "Unknown")
                 .collect(Collectors.toList());
         }
@@ -115,7 +127,7 @@ public record DetailedBookResponse(
             publisher,
             publishedDate,
             book.getImageUrl(),
-            authorNames
+            authors
         );
     }
 }

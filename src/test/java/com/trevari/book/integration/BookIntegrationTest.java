@@ -1,8 +1,12 @@
 package com.trevari.book.integration;
 
 import com.trevari.book.IntegrationTestSupport;
+import com.trevari.book.domain.Author;
 import com.trevari.book.domain.Book;
+import com.trevari.book.domain.BookAuthor;
 import com.trevari.book.domain.PublicationInfo;
+import com.trevari.book.persistence.AuthorJpaRepository;
+import com.trevari.book.persistence.BookAuthorJpaRepository;
 import com.trevari.book.persistence.BookJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +17,9 @@ import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -29,13 +35,37 @@ class BookIntegrationTest extends IntegrationTestSupport {
     @Autowired
     private BookJpaRepository bookRepository;
 
+    @Autowired
+    private AuthorJpaRepository authorRepository;
+
+    @Autowired
+    private BookAuthorJpaRepository bookAuthorRepository;
+
     private Book testBook;
 
     @BeforeEach
     void setUp() {
         // 테스트 데이터 설정
+        bookAuthorRepository.deleteAll();
         bookRepository.deleteAll();
+        authorRepository.deleteAll();
 
+        // 저자 생성
+        Author author1 = Author.builder()
+                .name("Raoul-Gabriel Urma")
+                .build();
+        Author author2 = Author.builder()
+                .name("Mario Fusco")
+                .build();
+        Author author3 = Author.builder()
+                .name("Alan Mycroft")
+                .build();
+
+        author1 = authorRepository.save(author1);
+        author2 = authorRepository.save(author2);
+        author3 = authorRepository.save(author3);
+
+        // 도서 생성
         testBook = Book.builder()
                 .isbn("9781617297397")
                 .title("Java in Action")
@@ -46,7 +76,45 @@ class BookIntegrationTest extends IntegrationTestSupport {
                         .build())
                 .build();
 
-        bookRepository.save(testBook);
+        testBook = bookRepository.save(testBook);
+
+        // 도서-저자 관계 생성
+        Set<BookAuthor> bookAuthors = new HashSet<>();
+        
+        BookAuthor bookAuthor1 = BookAuthor.builder()
+                .book(testBook)
+                .author(author1)
+                .role("저자")
+                .build();
+        BookAuthor bookAuthor2 = BookAuthor.builder()
+                .book(testBook)
+                .author(author2)
+                .role("저자")
+                .build();
+        BookAuthor bookAuthor3 = BookAuthor.builder()
+                .book(testBook)
+                .author(author3)
+                .role("저자")
+                .build();
+
+        bookAuthor1 = bookAuthorRepository.save(bookAuthor1);
+        bookAuthor2 = bookAuthorRepository.save(bookAuthor2);
+        bookAuthor3 = bookAuthorRepository.save(bookAuthor3);
+        
+        bookAuthors.add(bookAuthor1);
+        bookAuthors.add(bookAuthor2);
+        bookAuthors.add(bookAuthor3);
+
+        // Update the testBook's bookAuthors collection
+        testBook = Book.builder()
+                .isbn(testBook.getIsbn())
+                .title(testBook.getTitle())
+                .subtitle(testBook.getSubtitle())
+                .publicationInfo(testBook.getPublicationInfo())
+                .bookAuthors(bookAuthors)
+                .build();
+        
+        testBook = bookRepository.save(testBook);
         bookRepository.flush();
     }
 

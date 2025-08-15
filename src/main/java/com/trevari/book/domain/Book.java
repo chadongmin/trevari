@@ -69,7 +69,7 @@ public class Book {
     @Schema(description = "카테고리 목록")
     private Set<Category> categories;
     
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.EAGER)
     @Schema(description = "도서-저자 관계 목록")
     private Set<BookAuthor> bookAuthors;
     

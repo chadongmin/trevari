@@ -53,7 +53,7 @@ public class BookController implements BookApi {
         
         DetailedBookResponse detailedBook = bookService.getDetailedBookByIsbn(isbn);
         
-        return ApiResponse.ok(detailedBook, "Book detailed information retrieved successfully");
+        return ApiResponse.ok(detailedBook, "Book retrieved successfully");
     }
     
     /**

@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
  * 저자의 역할 정보를 포함한 관계를 관리
  */
 @Entity
+@Table(name = "book_author")
 @Getter
 @Builder
 @NoArgsConstructor
@@ -32,7 +34,7 @@ public class BookAuthor {
     @JsonBackReference
     private Book book;
     
-    @ManyToOne
+    @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "author_id")
     private Author author;
     

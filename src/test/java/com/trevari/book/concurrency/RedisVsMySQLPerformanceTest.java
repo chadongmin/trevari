@@ -2,6 +2,7 @@ package com.trevari.book.concurrency;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.trevari.book.IntegrationTestSupport;
 import com.trevari.book.application.SearchKeywordService;
 import com.trevari.book.domain.SearchKeyword;
 import com.trevari.book.dto.PopularKeywordDto;
@@ -13,19 +14,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 
-@SpringBootTest
-@ActiveProfiles("test")
 @DisplayName("MySQL vs Redis 성능 비교 테스트")
-class RedisVsMySQLPerformanceTest {
+class RedisVsMySQLPerformanceTest extends IntegrationTestSupport {
     
     @Autowired
     private SearchKeywordService searchKeywordService;
