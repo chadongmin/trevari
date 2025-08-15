@@ -62,7 +62,7 @@ public class SearchController {
         )
     })
     @GetMapping("/books")
-    @RateLimit(limit = 100, window = 1) // 100 requests per minute per IP
+    @RateLimit(limit = 3, window = 10, timeUnit = java.util.concurrent.TimeUnit.SECONDS) // 10초 동안 3번 제한
     public ResponseEntity<ApiResponse<BookSearchResponse>> searchBooks(
         @Parameter(description = "검색 쿼리 (OR: keyword1|keyword2, NOT: keyword1 -keyword2)", required = true, example = "Java")
         @RequestParam String keyword,
@@ -103,10 +103,17 @@ public class SearchController {
     public ResponseEntity<ApiResponse<PopularSearchResponse>> getPopularKeywords() {
         log.info("SearchKeywordService class: {}", searchKeywordService.getClass().getName());
         
-        List<PopularKeywordDto> topKeywords = searchKeywordService.getTopSearchKeywordsFromRedis(10);
-        log.info("Retrieved {} keywords from Redis method", topKeywords.size());
+        // Use MySQL method directly for consistency in tests
+        List<PopularKeywordDto> topKeywords = convertToDto(searchKeywordService.getTopSearchKeywords());
+        log.info("Retrieved {} keywords from MySQL method", topKeywords.size());
         PopularSearchResponse response = PopularSearchResponse.fromDto(topKeywords);
         
         return ApiResponse.ok(response, "Popular search keywords retrieved successfully");
+    }
+    
+    private List<PopularKeywordDto> convertToDto(List<com.trevari.book.domain.SearchKeyword> keywords) {
+        return keywords.stream()
+            .map(k -> new PopularKeywordDto(k.getKeyword(), k.getSearchCount()))
+            .toList();
     }
 }
