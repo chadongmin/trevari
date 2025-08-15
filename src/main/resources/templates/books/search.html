@@ -120,6 +120,40 @@
             color: #333;
         }
 
+        .categories-section {
+            margin-top: 20px;
+        }
+
+        .categories-section h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .category-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .category-tag {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+
         .results-container {
             background: white;
             border-radius: 10px;
@@ -299,6 +333,13 @@
                     <!-- 인기 검색어가 여기에 로드됩니다 -->
                 </div>
             </div>
+
+            <div class="categories-section" id="categoriesSection">
+                <h3>📂 카테고리별 도서</h3>
+                <div class="category-tags" id="categoryTags">
+                    <!-- 카테고리가 여기에 로드됩니다 -->
+                </div>
+            </div>
         </div>
 
         <div class="results-container" id="resultsContainer" style="display: none;">
@@ -333,11 +374,13 @@
                 this.hasMore = true;
                 this.loading = false;
                 this.searchQuery = '';
+                this.categoryQuery = '';
                 this.isShowingAllBooks = false;
                 
                 this.initializeElements();
                 this.bindEvents();
                 this.loadPopularKeywords();
+                this.loadCategories();
                 this.loadAllBooks(); // 페이지 로딩 시 전체 목록 표시
             }
 
@@ -352,6 +395,7 @@
                 this.searchStats = document.getElementById('searchStats');
                 this.paginationInfo = document.getElementById('paginationInfo');
                 this.keywordTags = document.getElementById('keywordTags');
+                this.categoryTags = document.getElementById('categoryTags');
             }
 
             bindEvents() {
@@ -577,6 +621,8 @@
                 
                 if (this.isShowingAllBooks) {
                     await this.loadAllBooks(false);
+                } else if (this.categoryQuery) {
+                    await this.searchByCategory(this.categoryQuery, false);
                 } else {
                     await this.performSearch(false);
                 }
@@ -602,6 +648,70 @@
                 }
             }
 
+            async loadCategories() {
+                try {
+                    // 인기 카테고리 (책 수가 많은 순) 로드
+                    const response = await fetch('/api/categories/popular?limit=15');
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.data) {
+                        this.displayCategories(data.data);
+                    }
+                } catch (error) {
+                    console.error('인기 카테고리 로드 실패:', error);
+                    // 실패시 전체 카테고리 로드 시도
+                    try {
+                        const fallbackResponse = await fetch('/api/categories');
+                        const fallbackData = await fallbackResponse.json();
+                        if (fallbackData.success && fallbackData.data) {
+                            this.displayCategories(fallbackData.data.slice(0, 15));
+                        }
+                    } catch (fallbackError) {
+                        console.error('카테고리 로드 완전 실패:', fallbackError);
+                    }
+                }
+            }
+
+            async searchByCategory(categoryName, resetResults = true) {
+                if (resetResults) {
+                    this.currentPage = 1;
+                    this.hasMore = true;
+                    this.searchQuery = '';
+                    this.isShowingAllBooks = false;
+                    this.categoryQuery = categoryName;
+                    this.bookList.innerHTML = '';
+                    this.hideNoResults();
+                }
+
+                this.showLoading();
+                
+                try {
+                    const response = await fetch(`/api/books/category/${encodeURIComponent(categoryName)}?page=${this.currentPage}&size=20`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.handleCategoryResults(data.data, resetResults, categoryName);
+                    } else {
+                        throw new Error(data.message || '카테고리 검색 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Category search error:', error);
+                    alert('카테고리 검색 중 오류가 발생했습니다: ' + error.message);
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
             displayPopularKeywords(keywords) {
                 this.keywordTags.innerHTML = '';
                 
@@ -617,6 +727,50 @@
                     });
                     this.keywordTags.appendChild(tag);
                 });
+            }
+
+            displayCategories(categories) {
+                this.categoryTags.innerHTML = '';
+                
+                categories.forEach(category => {
+                    const tag = document.createElement('button');
+                    tag.className = 'category-tag';
+                    // 책 수가 있으면 표시, 없으면 카테고리명만 표시
+                    tag.textContent = category.bookCount ? 
+                        `${category.name} (${category.bookCount})` : 
+                        category.name;
+                    tag.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.searchByCategory(category.name);
+                    });
+                    this.categoryTags.appendChild(tag);
+                });
+            }
+
+            handleCategoryResults(data, resetResults, categoryName) {
+                const { books, pageInfo, searchMetadata } = data;
+
+                if (resetResults) {
+                    this.displaySearchQuery.textContent = `📂 "${categoryName}" 카테고리 도서`;
+                    this.updateCategoryStats(pageInfo, searchMetadata, categoryName);
+                    this.resultsContainer.style.display = 'block';
+                }
+
+                if (books && books.length > 0) {
+                    this.appendBooks(books);
+                    this.currentPage++;
+                    this.hasMore = this.currentPage <= pageInfo.totalPages;
+                    this.updatePaginationInfo(pageInfo);
+                } else if (resetResults) {
+                    this.showNoResults();
+                }
+            }
+
+            updateCategoryStats(pageInfo, searchMetadata, categoryName) {
+                this.searchStats.innerHTML = `
+                    "${categoryName}" 카테고리 총 ${pageInfo.totalElements}권
+                    (${searchMetadata.executionTimeMs}ms)
+                `;
             }
 
             showLoading() {
