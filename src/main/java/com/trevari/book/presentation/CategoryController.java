@@ -2,6 +2,7 @@ package com.trevari.book.presentation;
 
 import com.trevari.book.application.CategoryService;
 import com.trevari.book.dto.response.CategoryResponse;
+import com.trevari.book.dto.response.PopularCategoryResponse;
 import com.trevari.global.dto.ApiResponse;
 import com.trevari.global.ratelimit.RateLimit;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,11 +63,11 @@ public class CategoryController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "인기 카테고리 목록 조회 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
-    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getPopularCategories(
+    public ResponseEntity<ApiResponse<List<PopularCategoryResponse>>> getPopularCategories(
             @RequestParam(defaultValue = "15") int limit) {
         log.info("Request to get popular categories - limit: {}", limit);
         
-        List<CategoryResponse> categories = categoryService.getPopularCategories(limit);
+        List<PopularCategoryResponse> categories = categoryService.getPopularCategories(limit);
         
         return ApiResponse.ok(categories, "Popular categories retrieved successfully");
     }

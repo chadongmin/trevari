@@ -2,6 +2,7 @@ package com.trevari.book.application;
 
 import com.trevari.book.domain.Category;
 import com.trevari.book.dto.response.CategoryResponse;
+import com.trevari.book.dto.response.PopularCategoryResponse;
 import com.trevari.book.persistence.CategoryJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +43,7 @@ public class CategoryService {
      * @param limit 조회할 카테고리 수
      * @return 인기 카테고리 목록 (책 수 포함)
      */
-    public List<CategoryResponse> getPopularCategories(int limit) {
+    public List<PopularCategoryResponse> getPopularCategories(int limit) {
         log.debug("Fetching popular categories with limit: {}", limit);
         
         List<Object[]> categoriesWithCount = categoryRepository.findCategoriesWithBookCount();
@@ -53,7 +54,7 @@ public class CategoryService {
                     Long id = ((Number) row[0]).longValue();
                     String name = (String) row[1];
                     Long bookCount = ((Number) row[2]).longValue();
-                    return CategoryResponse.of(id, name, bookCount);
+                    return PopularCategoryResponse.of(id, name, bookCount);
                 })
                 .toList();
     }

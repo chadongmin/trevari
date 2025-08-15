@@ -28,52 +28,203 @@ public class GoogleBooksDataFetcher {
      */
     public void generateSqlInsertStatements() {
         List<String> keywords = List.of(
-            "Java", "Spring", "Python", "JavaScript", "React", "Angular", "Vue", "Node.js", "TypeScript", "Kotlin",
-            "Database", "MySQL", "PostgreSQL", "MongoDB", "Redis", "Elasticsearch", "SQL", "NoSQL", "DynamoDB", "Firebase",
-            "Algorithm", "Data Structure", "Machine Learning", "AI", "Deep Learning", "Neural Network", "Computer Vision", "NLP", "Statistics", "Math",
-            "Design Pattern", "Clean Code", "Architecture", "Microservices", "REST API", "GraphQL", "Software Engineering", "Agile", "DevOps", "Testing",
-            "Cloud", "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes", "CI/CD", "Jenkins", "Git", "Linux",
-            "Frontend", "Backend", "Full Stack", "Mobile", "Android", "iOS", "Flutter", "React Native", "Web Development", "API",
-            "Security", "Cybersecurity", "Blockchain", "Encryption", "Network", "System Design", "Distributed Systems", "Performance", "Scalability", "Monitoring",
-            "Programming", "Coding", "Software", "Computer Science", "Technology", "Innovation", "Startup", "Business", "Management", "Leadership",
-            "Data Science", "Analytics", "Big Data", "Visualization", "Business Intelligence", "ETL", "Data Engineering", "Apache", "Spark", "Hadoop",
-            "Game Development", "Unity", "Graphics", "3D", "VR", "AR", "Robotics", "IoT", "Embedded", "Hardware"
+            "Java programming", "Spring Boot", "Python development", "JavaScript tutorial", "React guide", "Angular framework", "Vue.js", "Node.js server", "TypeScript programming", "Kotlin development",
+            "Database design", "MySQL administration", "PostgreSQL tutorial", "MongoDB guide", "Redis cache", "Elasticsearch search", "SQL queries", "NoSQL database", "DynamoDB AWS", "Firebase development",
+            "Algorithm implementation", "Data Structure book", "Machine Learning practice", "AI artificial intelligence", "Deep Learning neural", "Neural Network guide", "Computer Vision opencv", "NLP processing", "Statistics analysis", "Mathematics programming",
+            "Design Pattern software", "Clean Code practices", "Software Architecture", "Microservices design", "REST API development", "GraphQL tutorial", "Software Engineering principles", "Agile development", "DevOps practices", "Testing automation",
+            "Cloud computing", "AWS services", "Microsoft Azure", "Google Cloud Platform", "Docker containers", "Kubernetes orchestration", "CI/CD pipeline", "Jenkins automation", "Git version control", "Linux administration",
+            "Frontend development", "Backend programming", "Full Stack developer", "Mobile development", "Android programming", "iOS development", "Flutter framework", "React Native mobile", "Web Development guide", "API development",
+            "Cybersecurity practices", "Information security", "Blockchain technology", "Encryption methods", "Network security", "System Design interview", "Distributed Systems design", "Performance optimization", "Scalability patterns", "System monitoring",
+            "Programming fundamentals", "Software development", "Computer Science theory", "Technology trends", "Business intelligence", "Data Science analysis", "Analytics dashboard", "Big Data processing", "Data visualization", "ETL processes"
         );
         
         List<BookData> allBooks = new ArrayList<>();
         
         for (String keyword : keywords) {
             try {
+                // 더 구체적인 검색으로 가격 정보가 있는 책 위주로 조회
                 String url = String.format(
-                    "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=20&langRestrict=en",
+                    "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=15&langRestrict=en&orderBy=relevance&filter=paid-ebooks",
                     keyword
                 );
                 
-                String response = restTemplate.getForObject(url, String.class);
-                JsonNode root = objectMapper.readTree(response);
-                JsonNode items = root.get("items");
+                List<BookData> booksWithPrice = fetchBooksFromUrl(url);
                 
-                if (items != null) {
-                    for (JsonNode item : items) {
-                        BookData book = parseBookFromJson(item);
-                        if (book != null && !allBooks.contains(book)) {
-                            allBooks.add(book);
-                        }
+                // 가격 정보가 없다면 일반 검색도 수행
+                if (booksWithPrice.isEmpty()) {
+                    url = String.format(
+                        "https://www.googleapis.com/books/v1/volumes?q=%s&maxResults=10&langRestrict=en&orderBy=relevance",
+                        keyword
+                    );
+                    booksWithPrice = fetchBooksFromUrl(url);
+                }
+                
+                // 중복 제거하며 추가
+                for (BookData book : booksWithPrice) {
+                    if (!allBooks.contains(book)) {
+                        allBooks.add(book);
                     }
                 }
                 
                 // API 호출 간격 조절 (Google Books API rate limit 고려)
-                Thread.sleep(100);
+                Thread.sleep(150);
                 
             } catch (Exception e) {
                 log.error("Error fetching data for keyword: {}", keyword, e);
             }
         }
         
+        // 가격 정보 보완
+        allBooks = enhancePriceInformation(allBooks);
+        
         log.info("Generated {} books for SQL insertion", allBooks.size());
         
         // SQL INSERT문 생성 및 파일에 직접 저장
         generateInsertStatementsToFile(allBooks);
+    }
+    
+    /**
+     * URL에서 도서 데이터를 가져오는 헬퍼 메서드
+     */
+    private List<BookData> fetchBooksFromUrl(String url) {
+        List<BookData> books = new ArrayList<>();
+        try {
+            String response = restTemplate.getForObject(url, String.class);
+            JsonNode root = objectMapper.readTree(response);
+            JsonNode items = root.get("items");
+            
+            if (items != null) {
+                for (JsonNode item : items) {
+                    BookData book = parseBookFromJson(item);
+                    if (book != null) {
+                        books.add(book);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error fetching books from URL: {}", url, e);
+        }
+        return books;
+    }
+    
+    /**
+     * 가격 정보가 없는 도서들에 대해 추가 정보를 보완하는 메서드
+     */
+    private List<BookData> enhancePriceInformation(List<BookData> books) {
+        List<BookData> enhancedBooks = new ArrayList<>();
+        
+        for (BookData book : books) {
+            if (book.amount() == null || book.currency() == null) {
+                // 가격 정보가 없는 경우 추가 API 호출로 보완 시도
+                BookData enhancedBook = tryEnhanceBookPrice(book);
+                enhancedBooks.add(enhancedBook);
+            } else {
+                enhancedBooks.add(book);
+            }
+        }
+        
+        log.info("Enhanced price information for {} books", books.size());
+        return enhancedBooks;
+    }
+    
+    /**
+     * 개별 도서의 가격 정보를 보완하는 메서드
+     */
+    private BookData tryEnhanceBookPrice(BookData originalBook) {
+        try {
+            // Google Books API에서 해당 ISBN으로 다시 조회
+            String url = String.format(
+                "https://www.googleapis.com/books/v1/volumes?q=isbn:%s",
+                originalBook.isbn()
+            );
+            
+            String response = restTemplate.getForObject(url, String.class);
+            JsonNode root = objectMapper.readTree(response);
+            JsonNode items = root.get("items");
+            
+            if (items != null && items.size() > 0) {
+                JsonNode item = items.get(0);
+                JsonNode saleInfo = item.get("saleInfo");
+                
+                if (saleInfo != null && saleInfo.has("listPrice")) {
+                    JsonNode listPrice = saleInfo.get("listPrice");
+                    Integer amount = listPrice.has("amount") ? 
+                        (int)Math.round(listPrice.get("amount").asDouble()) : null;
+                    String currency = listPrice.has("currencyCode") ? 
+                        listPrice.get("currencyCode").asText() : null;
+                        
+                    if (amount != null && currency != null) {
+                        return new BookData(
+                            originalBook.isbn(), originalBook.title(), originalBook.subtitle(),
+                            originalBook.authors(), originalBook.publisher(), originalBook.publishedDate(),
+                            originalBook.imageUrl(), originalBook.description(), originalBook.pageCount(),
+                            originalBook.format(), originalBook.categories(), amount, currency
+                        );
+                    }
+                }
+            }
+            
+            // 가격 정보를 찾을 수 없다면 기본값 설정 (카테고리와 페이지 수 기반)
+            return generateDefaultPrice(originalBook);
+            
+        } catch (Exception e) {
+            log.debug("Failed to enhance price for book: {}", originalBook.isbn(), e);
+            return generateDefaultPrice(originalBook);
+        }
+    }
+    
+    /**
+     * 도서 특성에 기반한 기본 가격 생성
+     */
+    private BookData generateDefaultPrice(BookData book) {
+        Integer defaultAmount = calculateDefaultPrice(book);
+        String defaultCurrency = "USD";
+        
+        return new BookData(
+            book.isbn(), book.title(), book.subtitle(),
+            book.authors(), book.publisher(), book.publishedDate(),
+            book.imageUrl(), book.description(), book.pageCount(),
+            book.format(), book.categories(), defaultAmount, defaultCurrency
+        );
+    }
+    
+    /**
+     * 도서 특성에 기반한 가격 계산
+     */
+    private Integer calculateDefaultPrice(BookData book) {
+        int basePrice = 2999; // 기본 가격 $29.99
+        
+        // 페이지 수에 따른 가격 조정
+        if (book.pageCount() != null) {
+            if (book.pageCount() > 500) {
+                basePrice += 1500; // +$15 for thick books
+            } else if (book.pageCount() > 300) {
+                basePrice += 1000; // +$10 for medium books
+            }
+        }
+        
+        // 카테고리에 따른 가격 조정
+        if (book.categories() != null && !book.categories().isEmpty()) {
+            String firstCategory = book.categories().get(0).toLowerCase();
+            if (firstCategory.contains("computer") || firstCategory.contains("technology")) {
+                basePrice += 500; // 기술 서적은 더 비쌈
+            } else if (firstCategory.contains("business") || firstCategory.contains("management")) {
+                basePrice += 800;
+            }
+        }
+        
+        // 출간년도에 따른 가격 조정
+        if (book.publishedDate() != null) {
+            int yearsSincePublished = LocalDate.now().getYear() - book.publishedDate().getYear();
+            if (yearsSincePublished > 5) {
+                basePrice = (int)(basePrice * 0.8); // 5년 이상 된 책은 20% 할인
+            } else if (yearsSincePublished <= 1) {
+                basePrice = (int)(basePrice * 1.2); // 신간은 20% 프리미엄
+            }
+        }
+        
+        // 최소/최대 가격 제한
+        return Math.max(999, Math.min(basePrice, 9999)); // $9.99 ~ $99.99
     }
     
     private BookData parseBookFromJson(JsonNode item) {

@@ -38,6 +38,9 @@ spring:
     redis:
       time-to-live: 600000 # 10분 (milliseconds)
 
+  jackson:
+    default-property-inclusion: non_null
+
 server:
   port: 8080
 

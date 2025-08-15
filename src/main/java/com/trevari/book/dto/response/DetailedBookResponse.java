@@ -51,10 +51,7 @@ public record DetailedBookResponse(
     LocalDate publishedDate,
     
     @Schema(description = "도서 이미지 URL")
-    String imageUrl,
-    
-    @Schema(description = "하위 호환성을 위한 저자명 목록")
-    List<String> authors
+    String imageUrl
 ) {
     
     /**
@@ -73,7 +70,6 @@ public record DetailedBookResponse(
         
         // 저자 정보 처리
         List<BookAuthorResponse> bookAuthorResponses = null;
-        List<String> authors = null;
         
         if (book.getBookAuthors() != null && !book.getBookAuthors().isEmpty()) {
             bookAuthorResponses = book.getBookAuthors().stream()
@@ -85,23 +81,13 @@ public record DetailedBookResponse(
                 })
                 .map(BookAuthorResponse::from)
                 .collect(Collectors.toList());
-            
-            authors = book.getBookAuthors().stream()
-                .sorted((ba1, ba2) -> {
-                    if (ba1.getId() == null && ba2.getId() == null) return 0;
-                    if (ba1.getId() == null) return 1;
-                    if (ba2.getId() == null) return -1;
-                    return ba1.getId().compareTo(ba2.getId());
-                })
-                .map(bookAuthor -> bookAuthor.getAuthor() != null ? bookAuthor.getAuthor().getName() : "Unknown")
-                .collect(Collectors.toList());
         }
         
         // 카테고리 정보 처리
         List<CategoryResponse> categoryResponses = null;
         if (book.getCategories() != null && !book.getCategories().isEmpty()) {
             categoryResponses = book.getCategories().stream()
-                .map(category -> CategoryResponse.of(category.getId(), category.getName(), null))
+                .map(CategoryResponse::from)
                 .collect(Collectors.toList());
         }
         
@@ -126,8 +112,7 @@ public record DetailedBookResponse(
             categoryResponses,
             publisher,
             publishedDate,
-            book.getImageUrl(),
-            authors
+            book.getImageUrl()
         );
     }
 }
