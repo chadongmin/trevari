@@ -1,5 +1,6 @@
 package com.trevari.book.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -70,6 +71,7 @@ public class Book {
     private Set<Category> categories;
     
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true, fetch = jakarta.persistence.FetchType.EAGER)
+    @JsonManagedReference
     @Schema(description = "도서-저자 관계 목록")
     private Set<BookAuthor> bookAuthors;
     
