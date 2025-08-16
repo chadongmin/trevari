@@ -12,11 +12,15 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
-@org.springframework.context.annotation.Profile("!test")
 public class RateLimitService {
     
     private final RedisTemplate<String, Object> redisTemplate;
+    
+    public RateLimitService(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+        System.out.println(">>> RATE LIMIT SERVICE BEAN CREATED <<<");
+        log.error(">>> RATE LIMIT SERVICE BEAN CREATED <<<");
+    }
     
     /**
      * Lua 스크립트를 사용한 원자적 Rate Limiting 체크 Sliding Window Counter 알고리즘 구현
@@ -62,7 +66,10 @@ public class RateLimitService {
         String redisKey = "rate_limit:" + key;
         long currentTime = System.currentTimeMillis() / 1000; // Unix timestamp in seconds
         
+        log.info("Rate limit check START - key: {}, limit: {}, window: {}s", key, limit, windowSeconds);
+        
         try {
+            log.info("Executing Redis script for key: {}, redisKey: {}, args: [{}, {}, {}]", key, redisKey, windowSeconds, limit, currentTime);
             @SuppressWarnings("unchecked")
             List<Long> result = redisTemplate.execute(
                 rateLimitScript,
@@ -70,9 +77,13 @@ public class RateLimitService {
                 windowSeconds, limit, currentTime
             );
             
-            if (result.size() >= 2) {
+            log.info("Redis script result: {}", result);
+            
+            if (result != null && result.size() >= 2) {
                 boolean allowed = result.get(0) == 1L;
                 long remaining = result.get(1);
+                
+                log.info("Rate limit result - allowed: {}, remaining: {}", allowed, remaining);
                 
                 if (!allowed) {
                     // Rate limit 초과 시 남은 시간 계산
@@ -85,6 +96,7 @@ public class RateLimitService {
                 return true;
             }
             
+            log.warn("Invalid Redis script result: {}", result);
             return false;
         } catch (Exception e) {
             if (e instanceof RateLimitExceededException) {
