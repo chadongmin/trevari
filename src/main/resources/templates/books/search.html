@@ -276,6 +276,61 @@
       font-size: 14px;
     }
 
+    /* Rate Limit Alert Styles */
+    .rate-limit-alert {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+      display: none;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .rate-limit-alert.show {
+      display: block;
+    }
+
+    .rate-limit-alert h4 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .rate-limit-alert p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .rate-limit-alert .countdown {
+      font-weight: 600;
+      color: #ffed4e;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Disabled search button */
+    .search-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .search-btn:disabled:hover {
+      transform: none;
+    }
+
     @media (max-width: 768px) {
       .container {
         padding: 10px;
@@ -313,6 +368,13 @@
   </div>
 
   <div class="search-container">
+    <!-- Rate Limit Alert -->
+    <div class="rate-limit-alert" id="rateLimitAlert">
+      <h4>🚫 검색 요청 제한</h4>
+      <p id="rateLimitMessage">너무 많은 요청으로 인해 일시적으로 검색이 제한되었습니다.</p>
+      <p>다시 시도할 수 있는 시간: <span class="countdown" id="retryCountdown">--</span></p>
+    </div>
+
     <form class="search-form" id="searchForm">
       <input type="text"
              class="search-input"
@@ -320,7 +382,7 @@
              placeholder="도서 제목, 저자, 출판사를 검색하세요..."
              th:value="${searchQuery}"
              autocomplete="off">
-      <button type="submit" class="search-btn">검색</button>
+      <button type="submit" class="search-btn" id="searchBtn">검색</button>
     </form>
 
     <div class="search-info">
@@ -376,6 +438,8 @@
       this.searchQuery = '';
       this.categoryQuery = '';
       this.isShowingAllBooks = false;
+      this.rateLimitUntil = 0;
+      this.countdownInterval = null;
 
       this.initializeElements();
       this.bindEvents();
@@ -387,6 +451,7 @@
     initializeElements() {
       this.searchForm = document.getElementById('searchForm');
       this.searchInput = document.getElementById('searchInput');
+      this.searchBtn = document.getElementById('searchBtn');
       this.resultsContainer = document.getElementById('resultsContainer');
       this.bookList = document.getElementById('bookList');
       this.loadingElement = document.getElementById('loading');
@@ -396,6 +461,9 @@
       this.paginationInfo = document.getElementById('paginationInfo');
       this.keywordTags = document.getElementById('keywordTags');
       this.categoryTags = document.getElementById('categoryTags');
+      this.rateLimitAlert = document.getElementById('rateLimitAlert');
+      this.rateLimitMessage = document.getElementById('rateLimitMessage');
+      this.retryCountdown = document.getElementById('retryCountdown');
     }
 
     bindEvents() {
@@ -444,6 +512,11 @@
         return;
       }
 
+      // Rate limit 체크
+      if (this.isRateLimited()) {
+        return;
+      }
+
       if (resetResults) {
         this.currentPage = 1;
         this.hasMore = true;
@@ -459,6 +532,12 @@
         const response = await fetch(
             `/api/search/books?keyword=${encodeURIComponent(query)}&page=${this.currentPage}&size=20`);
 
+        if (response.status === 429) {
+          const data = await response.json();
+          this.handleRateLimit(data);
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -466,12 +545,17 @@
         const data = await response.json();
 
         if (data.success) {
+          this.hideRateLimitAlert();
           this.handleSearchResults(data.data, resetResults);
         } else {
           throw new Error(data.message || '검색 중 오류가 발생했습니다.');
         }
       } catch (error) {
         console.error('Search error:', error);
+        if (error.message.includes('429')) {
+          // 429 에러는 이미 처리됨
+          return;
+        }
         alert('검색 중 오류가 발생했습니다: ' + error.message);
       } finally {
         this.hideLoading();
@@ -643,6 +727,12 @@
       try {
         const response = await fetch('/api/search/popular');
 
+        if (response.status === 429) {
+          const data = await response.json();
+          this.handleRateLimit(data, false); // 인기 검색어는 UI 비활성화 안함
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -808,6 +898,87 @@
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    // Rate Limit 관련 메서드들
+    isRateLimited() {
+      return Date.now() < this.rateLimitUntil;
+    }
+
+    handleRateLimit(errorData, disableUI = true) {
+      console.log('Rate limit response:', errorData);
+      
+      // 에러 메시지에서 재시도 시간 추출
+      let retrySeconds = 10; // 기본값
+      if (errorData.data && errorData.data.length > 0) {
+        const message = errorData.data[0].message;
+        const match = message.match(/(\d+)\s*seconds?/);
+        if (match) {
+          retrySeconds = parseInt(match[1]);
+        }
+      }
+
+      this.rateLimitUntil = Date.now() + (retrySeconds * 1000);
+      this.showRateLimitAlert(errorData.data[0].message, retrySeconds, disableUI);
+    }
+
+    showRateLimitAlert(message, retrySeconds, disableUI = true) {
+      this.rateLimitMessage.textContent = message;
+      this.rateLimitAlert.classList.add('show');
+      
+      if (disableUI) {
+        this.searchBtn.disabled = true;
+        this.searchInput.disabled = true;
+      }
+
+      this.startCountdown(retrySeconds, disableUI);
+    }
+
+    hideRateLimitAlert() {
+      this.rateLimitAlert.classList.remove('show');
+      this.searchBtn.disabled = false;
+      this.searchInput.disabled = false;
+      
+      if (this.countdownInterval) {
+        clearInterval(this.countdownInterval);
+        this.countdownInterval = null;
+      }
+    }
+
+    startCountdown(seconds, disableUI = true) {
+      if (this.countdownInterval) {
+        clearInterval(this.countdownInterval);
+      }
+
+      let remaining = seconds;
+      this.updateCountdown(remaining);
+
+      this.countdownInterval = setInterval(() => {
+        remaining--;
+        this.updateCountdown(remaining);
+
+        if (remaining <= 0) {
+          clearInterval(this.countdownInterval);
+          this.countdownInterval = null;
+          this.hideRateLimitAlert();
+        }
+      }, 1000);
+    }
+
+    updateCountdown(seconds) {
+      if (seconds <= 0) {
+        this.retryCountdown.textContent = '0초';
+        return;
+      }
+
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      
+      if (minutes > 0) {
+        this.retryCountdown.textContent = `${minutes}분 ${remainingSeconds}초`;
+      } else {
+        this.retryCountdown.textContent = `${remainingSeconds}초`;
+      }
     }
   }
 
