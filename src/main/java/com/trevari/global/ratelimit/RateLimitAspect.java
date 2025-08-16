@@ -24,17 +24,27 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Aspect
 @Component
-@RequiredArgsConstructor
-@org.springframework.context.annotation.Profile("!test")
 public class RateLimitAspect {
     
     private final RateLimitService rateLimitService;
     private final ExpressionParser expressionParser = new SpelExpressionParser();
     
+    public RateLimitAspect(RateLimitService rateLimitService) {
+        this.rateLimitService = rateLimitService;
+        System.out.println(">>> RATE LIMIT ASPECT BEAN CREATED <<<");
+        log.error(">>> RATE LIMIT ASPECT BEAN CREATED <<<");
+    }
+    
     @Around("@annotation(rateLimit)")
     public Object handleRateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
+        System.out.println(">>> RATE LIMIT ASPECT TRIGGERED <<<");
+        log.error(">>> RATE LIMIT ASPECT TRIGGERED for method: {} <<<", joinPoint.getSignature().getName());
+        
         String key = generateKey(joinPoint, rateLimit);
         long windowInSeconds = rateLimit.timeUnit().toSeconds(rateLimit.window());
+        
+        System.out.println(">>> Rate Limit Check - key: " + key + ", limit: " + rateLimit.limit() + ", window: " + windowInSeconds + "s");
+        log.error(">>> Rate Limit Check - key: {}, limit: {}, window: {}s <<<", key, rateLimit.limit(), windowInSeconds);
         
         // Rate limit 체크
         rateLimitService.tryAcquire(key, rateLimit.limit(), windowInSeconds);
