@@ -103,17 +103,11 @@ public class SearchController {
     public ResponseEntity<ApiResponse<PopularSearchResponse>> getPopularKeywords() {
         log.info("SearchKeywordService class: {}", searchKeywordService.getClass().getName());
         
-        // Use MySQL method directly for consistency in tests
-        List<PopularKeywordDto> topKeywords = convertToDto(searchKeywordService.getTopSearchKeywords());
-        log.info("Retrieved {} keywords from MySQL method", topKeywords.size());
+        // Use Redis method for real-time popular keywords
+        List<PopularKeywordDto> topKeywords = searchKeywordService.getTopSearchKeywordsFromRedis();
+        log.info("Retrieved {} keywords from Redis method", topKeywords.size());
         PopularSearchResponse response = PopularSearchResponse.fromDto(topKeywords);
         
         return ApiResponse.ok(response, "Popular search keywords retrieved successfully");
-    }
-    
-    private List<PopularKeywordDto> convertToDto(List<com.trevari.book.domain.SearchKeyword> keywords) {
-        return keywords.stream()
-            .map(k -> new PopularKeywordDto(k.getKeyword(), k.getSearchCount()))
-            .toList();
     }
 }
