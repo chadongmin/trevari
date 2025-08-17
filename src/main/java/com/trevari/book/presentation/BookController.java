@@ -43,7 +43,7 @@ public class BookController implements BookApi {
      */
     @Override
     @GetMapping("/{isbn}")
-    @RateLimit(limit = 3, window = 10, timeUnit = java.util.concurrent.TimeUnit.SECONDS) // 10초 동안 3번 제한
+    @RateLimit(limit = 200, window = 1) // 200 requests per minute per IP
     public ResponseEntity<ApiResponse<DetailedBookResponse>> getBookDetail(@PathVariable String isbn) {
         
         if (StringUtils.isBlank(isbn)) {
@@ -56,51 +56,6 @@ public class BookController implements BookApi {
         return ApiResponse.ok(detailedBook, "Book retrieved successfully");
     }
     
-    /**
-     * 도서 검색 (GET /api/books)
-     *
-     * @param keyword 검색 키워드
-     * @param page    페이지 번호 (1부터 시작)
-     * @param size    페이지 크기
-     * @return 검색 결과
-     */
-    @Operation(summary = "도서 검색", description = "검색 쿼리로 도서를 검색합니다. OR(|), NOT(-) 연산자를 지원합니다.")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "200",
-            description = "검색 성공",
-            content = @Content(schema = @Schema(implementation = ApiResponse.class))
-        ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "400",
-            description = "잘못된 검색 쿼리",
-            content = @Content(schema = @Schema(implementation = ApiResponse.class))
-        )
-    })
-    @GetMapping
-    @RateLimit(limit = 3, window = 10, timeUnit = java.util.concurrent.TimeUnit.SECONDS) // 10초 동안 3번 제한
-    public ResponseEntity<ApiResponse<BookSearchResponse>> searchBooks(
-        @Parameter(description = "검색 쿼리 (OR: keyword1|keyword2, NOT: keyword1 -keyword2)", required = true, example = "Java")
-        @RequestParam String keyword,
-        @Parameter(description = "페이지 번호 (1부터 시작)", example = "1")
-        @RequestParam(defaultValue = "1") int page,
-        @Parameter(description = "페이지 크기", example = "20")
-        @RequestParam(defaultValue = "20") int size) {
-        
-        if (StringUtils.isBlank(keyword)) {
-            throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
-        }
-        
-        log.info("Request to search books via /api/books - query: {}, page: {}, size: {}", keyword, page, size);
-        
-        // 페이지 번호를 0 기반으로 변환 (Spring Data는 0부터 시작)
-        Pageable pageable = PageRequest.of(page - 1, size);
-        
-        BookSearchResponse response = bookService.searchBooks(keyword, pageable);
-        
-        return ApiResponse.ok(response, "Books search completed successfully");
-    }
-
     /**
      * 전체 도서 목록 조회 (페이징)
      *
@@ -159,34 +114,6 @@ public class BookController implements BookApi {
         Pageable pageable = PageRequest.of(page - 1, size);
         BookSearchResponse response = bookService.getBooksByCategory(categoryName, pageable);
         
-        return ApiResponse.ok(response, String.format("Books for category '%s' retrieved successfully", categoryName));
-    }
-
-    /**
-     * 카테고리별 도서 검색
-     *
-     * @param categoryName 카테고리명
-     * @param page 페이지 번호 (1부터 시작)
-     * @param size 페이지 크기
-     * @return 검색 결과
-     */
-    @GetMapping("/category/{categoryName}")
-    @RateLimit(limit = 100, window = 1) // 100 requests per minute per IP
-    public ResponseEntity<ApiResponse<BookSearchResponse>> getBooksByCategory(
-            @PathVariable String categoryName,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
-
-        if (StringUtils.isBlank(categoryName)) {
-            throw new BookException(BookExceptionCode.INVALID_SEARCH_KEYWORD);
-        }
-
-        log.info("Request to get books by category - category: {}, page: {}, size: {}", categoryName, page, size);
-
-        // 페이지 번호를 0 기반으로 변환
-        Pageable pageable = PageRequest.of(page - 1, size);
-        BookSearchResponse response = bookService.getBooksByCategory(categoryName, pageable);
-
         return ApiResponse.ok(response, String.format("Books for category '%s' retrieved successfully", categoryName));
     }
 }

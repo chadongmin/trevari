@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.trevari.book.application.BookService;
 import com.trevari.book.domain.Book;
-import com.trevari.book.domain.Price;
 import com.trevari.book.domain.PublicationInfo;
 import com.trevari.book.exception.BookException;
 import com.trevari.book.exception.BookExceptionCode;
@@ -23,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -63,11 +63,6 @@ class BookControllerTest {
                         .publisher("Manning Publications")
                         .publishedDate(LocalDate.of(2020, 1, 1))
                         .build())
-                .price(Price.builder()
-                        .amount(30000)
-                        .currency("KRW")
-                        .build())
-                //.bookFormat(BookFormat.HARDCOVER)
                 .build();
     }
 
@@ -76,7 +71,7 @@ class BookControllerTest {
     void getBookDetail_Success() throws Exception {
         // given
         String isbn = "9781617297397";
-        //given(bookService.getDetailedBookByIsbn(isbn)).willReturn(sampleBook);
+        given(bookService.getBookByIsbn(isbn)).willReturn(sampleBook);
 
         // when & then
         mockMvc.perform(get("/api/books/{isbn}", isbn)
@@ -86,9 +81,17 @@ class BookControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("Book retrieved successfully"));
+                .andExpect(jsonPath("$.message").value("Book retrieved successfully"))
+                .andExpect(jsonPath("$.data.isbn").value("9781617297397"))
+                .andExpect(jsonPath("$.data.title").value("Java in Action"))
+                .andExpect(jsonPath("$.data.subtitle").value("Lambdas, streams, functional and reactive programming"))
+                .andExpect(jsonPath("$.data.authors").isArray())
+                .andExpect(jsonPath("$.data.authors").isEmpty()) // Authors moved to BookAuthor entity
+                .andExpect(jsonPath("$.data.publisher").value("Manning Publications"))
+                .andExpect(jsonPath("$.data.publishedDate").value("2020-01-01"))
+                .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(bookService).getDetailedBookByIsbn(isbn);
+        verify(bookService).getBookByIsbn(isbn);
     }
 
     @Test
@@ -96,7 +99,7 @@ class BookControllerTest {
     void getBookDetail_BookNotFound() throws Exception {
         // given
         String isbn = "nonexistent-isbn";
-        given(bookService.getDetailedBookByIsbn(isbn))
+        given(bookService.getBookByIsbn(isbn))
                 .willThrow(new BookException(BookExceptionCode.BOOK_NOT_FOUND));
 
         // when & then
@@ -113,7 +116,7 @@ class BookControllerTest {
                 .andExpect(jsonPath("$.data[0].message").value("Book not found"))
                 .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(bookService).getDetailedBookByIsbn(isbn);
+        verify(bookService).getBookByIsbn(isbn);
     }
 
     @Test

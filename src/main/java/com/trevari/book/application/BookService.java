@@ -73,23 +73,6 @@ public class BookService {
     }
 
     /**
-     * ISBN으로 도서 상세 정보 조회 (DetailedBookResponse 반환)
-     *
-     * @param isbn 도서 ISBN
-     * @return 도서 상세 정보 DTO
-     * @throws BookException 도서를 찾을 수 없는 경우
-     */
-    public DetailedBookResponse getDetailedBookByIsbn(String isbn) {
-        log.info("Getting detailed book information for ISBN: {}", isbn);
-        
-        Book book = getBookByIsbn(isbn);
-        DetailedBookResponse response = DetailedBookResponse.from(book);
-        
-        log.debug("Successfully converted book to detailed response for ISBN: {}", isbn);
-        return response;
-    }
-    
-    /**
      * 키워드로 도서 검색 (캐싱 최적화 버전)
      *
      * @param keyword  검색 키워드

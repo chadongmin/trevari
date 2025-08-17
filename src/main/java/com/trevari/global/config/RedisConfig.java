@@ -23,6 +23,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  */
 @Configuration
 @EnableCaching
+@org.springframework.context.annotation.Profile("!test")
 public class RedisConfig {
     
     /**

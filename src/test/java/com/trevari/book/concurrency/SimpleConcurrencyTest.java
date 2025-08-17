@@ -4,7 +4,6 @@ import com.trevari.book.application.SearchKeywordService;
 import com.trevari.book.domain.SearchKeyword;
 import com.trevari.book.persistence.SearchKeywordJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,14 +15,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SpringBootTest
-@ActiveProfiles("test")
+@ActiveProfiles("test") 
 class SimpleConcurrencyTest {
 
     @Autowired
     private SearchKeywordService searchKeywordService;
 
-    @Autowired
+    @Autowired 
     private SearchKeywordJpaRepository searchKeywordRepository;
 
     @BeforeEach
@@ -60,10 +61,10 @@ class SimpleConcurrencyTest {
         executor.shutdown();
 
         SearchKeyword result = searchKeywordRepository.findByKeyword("testword").orElse(null);
-
+        
         System.out.println("Expected: " + EXPECTED_TOTAL);
         System.out.println("Actual: " + (result != null ? result.getSearchCount() : 0));
-
+        
         if (result != null) {
             long lost = EXPECTED_TOTAL - result.getSearchCount();
             if (lost > 0) {

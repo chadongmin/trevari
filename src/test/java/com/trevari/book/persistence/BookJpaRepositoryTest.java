@@ -131,20 +131,18 @@ class BookJpaRepositoryTest {
     }
     
     @Test
-    @DisplayName("키워드로 도서 검색 - 부분 문자열 검색")
-    void findByKeyword_SearchPartialMatch() {
+    @DisplayName("키워드로 도서 검색 - 저자에서 검색")
+    void findByKeyword_SearchInAuthor() {
         // Given
         Pageable pageable = PageRequest.of(0, 10);
         
-        // When - "Action"으로 제목에서 부분 검색
-        Page<Book> result = bookRepository.findByKeyword("Action", pageable);
+        // When
+        Page<Book> result = bookRepository.findByKeyword("Craig", pageable);
         
         // Then
         assertThat(result).isNotEmpty();
-        assertThat(result.getContent()).hasSize(2); // Java와 Spring 책
-        assertThat(result.getContent())
-                .extracting(Book::getTitle)
-                .containsExactlyInAnyOrder("Java in Action", "Spring in Action");
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getPublicationInfo().getAuthors()).isEmpty(); // Authors moved to BookAuthor entity
     }
     
     @Test

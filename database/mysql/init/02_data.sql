@@ -9629,19 +9629,19 @@ INSERT IGNORE INTO book_category (book_isbn, category_id) SELECT 'RShNAQAAMAAJ',
 INSERT IGNORE INTO book_category (book_isbn, category_id) SELECT 'j7Ifw4U3SccC', id FROM category WHERE name = 'Industrial priorities';
 INSERT IGNORE INTO book_category (book_isbn, category_id) SELECT 'xDfNzirYpwoC', id FROM category WHERE name = 'Retail trade';
 
--- Search keywords data (주석 처리 - 빈 상태로 시작)
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Java', 150);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Spring', 140);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Python', 130);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('JavaScript', 120);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('React', 110);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Database', 100);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Algorithm', 90);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Clean Code', 80);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Design Pattern', 70);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Architecture', 60);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Microservices', 50);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Kubernetes', 40);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('MySQL', 30);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('MongoDB', 20);
--- INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Programming', 10);
+-- Search keywords data
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Java', 150);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Spring', 140);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Python', 130);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('JavaScript', 120);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('React', 110);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Database', 100);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Algorithm', 90);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Clean Code', 80);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Design Pattern', 70);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Architecture', 60);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Microservices', 50);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Kubernetes', 40);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('MySQL', 30);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('MongoDB', 20);
+INSERT IGNORE INTO search_keywords (keyword, search_count) VALUES ('Programming', 10);

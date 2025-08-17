@@ -75,7 +75,7 @@ spring:
     name: trevari
 
   datasource:
-    url: jdbc:mysql://trevari:3306/trevari?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://localhost:3306/trevari?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: trevari
     password: trevari1234
@@ -83,16 +83,20 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: false
+        format_sql: true
+
+  #  sql:
+  #    init:
+  #      mode: never
 
   data:
     redis:
-      host: redis
-      port: 6379
+      host: localhost
+      port: 16379
       timeout: 2000ms
       lettuce:
         pool:
@@ -109,12 +113,6 @@ spring:
 server:
   port: 8080
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: beans,health,info,metrics
-
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -129,8 +127,7 @@ springdoc:
 
 logging:
   level:
-    com.trevari: INFO
-    com.trevari.global.ratelimit: DEBUG
+    com.trevari.bookapi: DEBUG
     org.springframework.web: INFO
-    org.hibernate.SQL: INFO
-    org.hibernate.type.descriptor.sql.BasicBinder: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

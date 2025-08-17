@@ -36,7 +36,6 @@ public class BookAuthor {
     
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "author_id")
-    @JsonBackReference("author-bookAuthors")
     private Author author;
     
     private String role;
