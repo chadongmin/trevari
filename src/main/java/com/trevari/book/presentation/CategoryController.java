@@ -25,23 +25,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
-@Tag(name = "Categories", description = "카테고리 관리 API")
-public class CategoryController {
+public class CategoryController implements CategoryApi {
 
     private final CategoryService categoryService;
 
-    /**
-     * 모든 카테고리 목록 조회
-     *
-     * @return 카테고리 목록
-     */
+    @Override
     @GetMapping
-    @RateLimit(limit = 200, window = 1) // 200 requests per minute per IP
-    @Operation(summary = "모든 카테고리 조회", description = "시스템에 등록된 모든 카테고리 목록을 반환합니다.")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 목록 조회 성공"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
-    })
+    @RateLimit(limit = 200, window = 1)
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories() {
         log.info("Request to get all categories");
         
@@ -50,19 +40,9 @@ public class CategoryController {
         return ApiResponse.ok(categories, "Categories retrieved successfully");
     }
     
-    /**
-     * 인기 카테고리 목록 조회 (책 수가 많은 순)
-     *
-     * @param limit 조회할 카테고리 수 (기본값: 15)
-     * @return 인기 카테고리 목록
-     */
+    @Override
     @GetMapping("/popular")
-    @RateLimit(limit = 200, window = 1) // 200 requests per minute per IP
-    @Operation(summary = "인기 카테고리 조회", description = "책 수가 많은 순으로 정렬된 인기 카테고리 목록을 반환합니다.")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "인기 카테고리 목록 조회 성공"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
-    })
+    @RateLimit(limit = 200, window = 1)
     public ResponseEntity<ApiResponse<List<PopularCategoryResponse>>> getPopularCategories(
             @RequestParam(defaultValue = "15") int limit) {
         log.info("Request to get popular categories - limit: {}", limit);

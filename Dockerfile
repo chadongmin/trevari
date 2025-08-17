@@ -1,9 +1,18 @@
-FROM openjdk:17-jdk-slim
+FROM gradle:jdk17 AS builder
+
+WORKDIR /build
+
+COPY . .
+
+RUN ./gradlew build -x test --no-daemon
+
+
+FROM openjdk:17-slim
 
 WORKDIR /app
 
-COPY build/libs/*.jar app.jar
+COPY --from=builder /build/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java","-jar","app.jar"]

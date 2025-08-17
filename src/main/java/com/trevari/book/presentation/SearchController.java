@@ -34,41 +34,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/search")
 @RequiredArgsConstructor
-@Tag(name = "Search API", description = "도서 검색 및 인기 키워드 API")
-public class SearchController {
+public class SearchController implements SearchApi {
     
     private final BookService bookService;
     private final SearchKeywordService searchKeywordService;
     
-    /**
-     * 도서 검색 (명시적 검색 API)
-     *
-     * @param q    검색 쿼리
-     * @param page 페이지 번호 (1부터 시작)
-     * @param size 페이지 크기
-     * @return 검색 결과
-     */
-    @Operation(summary = "도서 검색", description = "검색 쿼리로 도서를 검색합니다. OR(|), NOT(-) 연산자를 지원합니다.")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "200",
-            description = "검색 성공",
-            content = @Content(schema = @Schema(implementation = ApiResponse.class))
-        ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "400",
-            description = "잘못된 검색 쿼리",
-            content = @Content(schema = @Schema(implementation = ApiResponse.class))
-        )
-    })
+    @Override
     @GetMapping("/books")
-    @RateLimit(limit = 100, window = 1) // 100 requests per minute per IP
+    @RateLimit(limit = 3, window = 10, timeUnit = java.util.concurrent.TimeUnit.SECONDS)
     public ResponseEntity<ApiResponse<BookSearchResponse>> searchBooks(
-        @Parameter(description = "검색 쿼리 (OR: keyword1|keyword2, NOT: keyword1 -keyword2)", required = true, example = "Java")
         @RequestParam String keyword,
-        @Parameter(description = "페이지 번호 (1부터 시작)", example = "1")
         @RequestParam(defaultValue = "1") int page,
-        @Parameter(description = "페이지 크기", example = "20")
         @RequestParam(defaultValue = "20") int size) {
         
         if (StringUtils.isBlank(keyword)) {
@@ -85,25 +61,14 @@ public class SearchController {
         return ApiResponse.ok(response, "Books search completed successfully");
     }
     
-    /**
-     * 인기 검색 키워드 조회 (상위 10개)
-     *
-     * @return 인기 검색 키워드 목록 (검색 횟수와 함께)
-     */
-    @Operation(summary = "인기 검색 키워드", description = "검색 횟수 기준 상위 10개 인기 키워드를 조회합니다.")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "200",
-            description = "조회 성공",
-            content = @Content(schema = @Schema(implementation = ApiResponse.class))
-        )
-    })
+    @Override
     @GetMapping("/popular")
-    @RateLimit(limit = 20, window = 1) // 20 requests per minute per IP  
+    @RateLimit(limit = 20, window = 1)  
     public ResponseEntity<ApiResponse<PopularSearchResponse>> getPopularKeywords() {
         log.info("SearchKeywordService class: {}", searchKeywordService.getClass().getName());
         
-        List<PopularKeywordDto> topKeywords = searchKeywordService.getTopSearchKeywordsFromRedis(10);
+        // Use Redis method for real-time popular keywords
+        List<PopularKeywordDto> topKeywords = searchKeywordService.getTopSearchKeywordsFromRedis();
         log.info("Retrieved {} keywords from Redis method", topKeywords.size());
         PopularSearchResponse response = PopularSearchResponse.fromDto(topKeywords);
         

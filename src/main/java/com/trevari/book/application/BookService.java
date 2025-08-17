@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class BookService {
 
     private final SearchKeywordService searchKeywordService;
@@ -34,6 +33,7 @@ public class BookService {
      * @return 조회된 도서 엔티티
      * @throws BookException 도서를 찾을 수 없는 경우
      */
+    @Transactional(readOnly = true)
     public Book getBookByIsbn(String isbn) {
         log.debug("Finding book by ISBN: {}", isbn);
 
@@ -62,6 +62,7 @@ public class BookService {
      * @return 도서 상세 정보 DTO
      * @throws BookException 도서를 찾을 수 없는 경우
      */
+    @Transactional(readOnly = true)
     public DetailedBookResponse getDetailedBookByIsbn(String isbn) {
         log.info("Getting detailed book information for ISBN: {}", isbn);
 
@@ -74,6 +75,7 @@ public class BookService {
 
     /**
      * 키워드로 도서 검색 (캐싱 최적화 버전)
+     * 트랜잭션 없이 실행하여 키워드 기록과의 충돌 방지
      *
      * @param keyword  검색 키워드
      * @param pageable 페이징 정보
@@ -89,8 +91,8 @@ public class BookService {
             // 캐시된 결과 조회 (execution time 제외)
             CacheableBookSearchResult cachedResult = bookCacheService.getCachedSearchResult(keyword, pageable);
 
-            // 검색 키워드 기록 - Redis 방식 사용 (동시성 문제 해결)
-            searchKeywordService.recordSearchKeywordWithRedis(keyword);
+            // 검색 키워드 기록을 별도 트랜잭션으로 분리하여 비동기 처리
+            recordSearchKeywordAsync(keyword);
 
             long executionTime = System.currentTimeMillis() - startTime;
             log.info("Book search completed in {}ms, found {} books",
@@ -106,11 +108,26 @@ public class BookService {
     }
 
     /**
+     * 검색 키워드 기록을 완전히 분리된 비동기 트랜잭션으로 처리
+     * 메인 검색 트랜잭션과 분리하여 롤백 이슈 방지
+     */
+    private void recordSearchKeywordAsync(String keyword) {
+        try {
+            // 비동기로 완전히 독립적인 트랜잭션에서 키워드 기록
+            searchKeywordService.recordSearchKeywordAsync(keyword);
+        } catch (Exception e) {
+            // 키워드 기록 실패는 로그만 남기고 검색 자체는 계속 진행
+            log.warn("Failed to initiate async keyword recording for '{}': {}", keyword, e.getMessage());
+        }
+    }
+
+    /**
      * 전체 도서 목록 조회 (페이징)
      *
      * @param pageable 페이징 정보
      * @return 전체 도서 목록
      */
+    @Transactional(readOnly = true)
     public BookSearchResponse getAllBooks(Pageable pageable) {
         log.info("Getting all books - page: {}, size: {}",
                 pageable.getPageNumber(), pageable.getPageSize());
@@ -134,6 +151,7 @@ public class BookService {
      * @param pageable     페이징 정보
      * @return 검색 결과
      */
+    @Transactional(readOnly = true)
     public BookSearchResponse getBooksByCategory(String categoryName, Pageable pageable) {
         log.info("Searching books by category: {}, page: {}, size: {}",
                 categoryName, pageable.getPageNumber(), pageable.getPageSize());
