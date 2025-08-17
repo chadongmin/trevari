@@ -58,7 +58,7 @@ class SearchControllerTest {
                 new PopularKeywordDto("spring", 80L),
                 new PopularKeywordDto("javascript", 70L)
         );
-        given(searchKeywordService.getTopSearchKeywordsFromRedis(10)).willReturn(mockKeywords);
+        given(searchKeywordService.getTopSearchKeywordsFromRedis()).willReturn(mockKeywords);
 
         // When & Then
         mockMvc.perform(get("/api/search/popular")
@@ -80,7 +80,7 @@ class SearchControllerTest {
     @DisplayName("검색 키워드가 없을 때 빈 배열을 반환한다")
     void getPopularKeywords_WhenNoKeywords_ShouldReturnEmptyArray() throws Exception {
         // Given - Redis 기반 메서드 사용
-        given(searchKeywordService.getTopSearchKeywordsFromRedis(10)).willReturn(Collections.emptyList());
+        given(searchKeywordService.getTopSearchKeywordsFromRedis()).willReturn(Collections.emptyList());
 
         // When & Then
         mockMvc.perform(get("/api/search/popular")
